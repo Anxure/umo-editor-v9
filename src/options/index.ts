@@ -34,6 +34,7 @@ const defaultOptions: UmoEditorOptions = {
   fullscreenZIndex: 10,
   dicts: defaultDicts,
   toolbar: {
+    show: true,
     showSaveLabel: true,
     showToggleToolbar: true,
     defaultMode: 'ribbon',
@@ -358,6 +359,11 @@ const ojbectSchema = new ObjectSchema({
         required: false,
       },
       showToggleToolbar: {
+        merge: 'replace',
+        validate: 'boolean',
+        required: false,
+      },
+      show: {
         merge: 'replace',
         validate: 'boolean',
         required: false,

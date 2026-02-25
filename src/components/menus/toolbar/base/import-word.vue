@@ -74,7 +74,7 @@ const importWord = () => {
           return
         }
         if (result?.code === 200) {
-          editor.value?.commands.setContent(result.data.docContent)
+          editor.value?.commands.setContent(result.data)
         } else {
           useMessage('error', {
             attach: container,

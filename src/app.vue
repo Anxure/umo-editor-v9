@@ -1,13 +1,7 @@
 <template>
   <div class="examples">
     <div class="box">
-      <umo-editor
-        ref="editorRef"
-        v-bind="options"
-        @exportWord="handleExportWord"
-        @customSaveContent="handleCustomSaveContent"
-        @handleFullTextCorrection="handleFullTextCorrection"
-      >
+      <umo-editor ref="editorRef" v-bind="options" @exportWord="handleExportWord" @customSaveContent="handleCustomSaveContent" @handleFullTextCorrection="handleFullTextCorrection">
         <template #paragraph_left_menu="props">
           <!-- <umo-menu-button>1111</umo-menu-button> -->
         </template>
@@ -54,8 +48,9 @@ const handleFullTextCorrection = () => {
 const options = $ref({
   toolbar: {
     showToggleToolbar: false,
+    show: false,
     // defaultMode: 'classic',
-    // menus: ['base'],
+    menus: ['base'],
   },
   document: {
     title: '测试文档',
@@ -150,11 +145,13 @@ body {
   padding: 0;
   margin: 0;
 }
+
 .examples {
   margin: 20px;
   display: flex;
   height: calc(100vh - 40px);
 }
+
 .box {
   border: solid 1px #ddd;
   box-sizing: border-box;

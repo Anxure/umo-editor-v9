@@ -65,6 +65,7 @@ export type ToolbarMenu =
   | 'custom'
 
 export interface ToolbarOptions {
+  show?: boolean
   showSaveLabel?: boolean
   showToggleToolbar?: boolean
   defaultMode?: 'classic' | 'ribbon'
