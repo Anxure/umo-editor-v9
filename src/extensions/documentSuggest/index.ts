@@ -193,7 +193,7 @@ export const DocumentSuggest = Extension.create({
                 const detectionNodeTypes = ['heading', 'paragraph', 'listItem', 'list', 'blockquote', 'table', 'tableRow', 'tableCell'];
                 // 这里过滤第一层的自定义节点（仅保留一些特定节点）
                 const rules = this.options.rules || [];
-                docJson.content = docJson.content.filter((node: any) => detectionNodeTypes.includes(node.type) && node.content);
+                docJson.content = docJson.content?.filter((node: any) => detectionNodeTypes.includes(node.type) && node.content);
                 (async () => {
                     try {
                         let suggestions: Suggestion[] = [];
@@ -372,7 +372,7 @@ export const DocumentSuggest = Extension.create({
                             .focus()
                             .setTextSelection(range)
                             .setColor('#000000')
-                            .unsetBackgroundColor()
+                            .unsetMark('backgroundColor')
                             .run();
                         break;
                     }

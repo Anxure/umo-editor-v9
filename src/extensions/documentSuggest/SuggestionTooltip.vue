@@ -22,9 +22,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
 import { offset, shift, useFloating } from '@floating-ui/vue'
-
+// ts-ignore
+// import { ref, computed } from 'vue'
 const props = defineProps({
     element: {
         type: Object,

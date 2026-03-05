@@ -46,7 +46,7 @@ const buildConfig = {
     name: pkg.name,
     fileName: 'umo-editor',
   },
-  outDir: 'dist',
+  outDir: process.env.BUILD_TARGET === 'tj' ? '/Volumes/ykxDrive/work/tj-platform-web/packages/app-main/src/editor' : 'dist',
   copyPublicDir: false,
   minify: 'esbuild' as const,
   cssMinify: true,
