@@ -50,7 +50,7 @@ const buildConfig: import('vite').BuildOptions = {
      */
     formats: ['es'],
   } as import('vite').LibraryOptions,
-  outDir: 'dist',
+  outDir: process.env.BUILD_TARGET === 'tj' ? '/Volumes/ykxDrive/work/tj-platform-web/packages/app-main/src/editor' : 'dist',
   copyPublicDir: false,
   minify: 'esbuild' as const,
   cssMinify: true,
