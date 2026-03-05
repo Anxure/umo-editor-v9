@@ -11,28 +11,27 @@ const options = inject('options')
 const $options = options.value.importWord
 
 // 动态导入 mammoth.js
-onMounted(async () => {
-  await loadResource(
-    `${options.value.cdnUrl}/libs/mammoth/mammoth.browser.min.js`,
-    'script',
-    'mammoth-script',
-  )
-})
+// onMounted(async () => {
+//   await loadResource(
+//     `${options.value.cdnUrl}/libs/mammoth/mammoth.browser.min.js`,
+//     'script',
+//     'mammoth-script',
+//   )
+// })
 
 const importWord = () => {
-  // @ts-expect-error, global variable injected by script
-  if (!mammoth) {
-    const dialog = useAlert({
-      attach: container,
-      theme: 'warning',
-      header: t('base.importWord.loadScript.title'),
-      body: t('base.importWord.loadScript.message'),
-      onConfirm() {
-        dialog.destroy()
-      },
-    })
-    return
-  }
+  // if (!mammoth) {
+  //   const dialog = useAlert({
+  //     attach: container,
+  //     theme: 'warning',
+  //     header: t('base.importWord.loadScript.title'),
+  //     body: t('base.importWord.loadScript.message'),
+  //     onConfirm() {
+  //       dialog.destroy()
+  //     },
+  //   })
+  //   return
+  // }
   const { open, onChange } = useFileDialog({
     accept: '.docx',
     reset: true,

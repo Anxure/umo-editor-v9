@@ -1,11 +1,11 @@
 <template>
-  <div v-if="$toolbar.show && options.toolbar?.show" class="umo-toolbar-container">
-    <toolbar-ribbon v-if="$toolbar.mode === 'ribbon'" :menus="toolbarMenus" :current-menu="currentMenu" @menu-change="menuChange">
+  <div v-if="options.toolbar?.show" class="umo-toolbar-container">
+    <toolbar-ribbon v-if="options.toolbar.defaultMode === 'ribbon'" :menus="toolbarMenus" :current-menu="currentMenu" @menu-change="menuChange">
       <template v-for="item in options.toolbar?.menus" :key="item" #[`toolbar_${item}`]="props">
         <slot :name="`toolbar_${item}`" v-bind="props" />
       </template>
     </toolbar-ribbon>
-    <toolbar-classic v-if="$toolbar.mode === 'classic'" :menus="toolbarMenus" :current-menu="currentMenu" @menu-change="menuChange">
+    <toolbar-classic v-if="options.toolbar.defaultMode === 'classic'" :menus="toolbarMenus" :current-menu="currentMenu" @menu-change="menuChange">
       <template v-for="item in options.toolbar?.menus" :key="item" #[`toolbar_${item}`]="props">
         <slot :name="`toolbar_${item}`" v-bind="props" />
       </template>
@@ -43,25 +43,6 @@
           </div>
         </template>
       </t-popup>
-      <t-dropdown trigger="click" size="small" placement="bottom-right" :popup-props="{
-        destroyOnClose: true,
-        attach: container,
-      }" v-if="
-        options.toolbar.showToggleToolbar &&
-        options.document.readOnly !== true
-      " @click="toggleToolbarMode">
-        <t-button class="umo-toolbar-actions-button" variant="text" size="small">
-          <icon name="expand-down" />
-          <span class="umo-button-text">{{ t('toolbar.toggle') }}</span>
-        </t-button>
-        <template #dropdown>
-          <t-dropdown-menu v-for="item in editorModeOptions" :key="(item.value as string)" :content="item.label" :value="item.value" :divider="item.divider" :active="item.value === $toolbar.mode">
-            <template #prefixIcon>
-              <icon :name="item.prefixIcon" />
-            </template>
-          </t-dropdown-menu>
-        </template>
-      </t-dropdown>
     </div>
   </div>
   <!-- <tooltip v-else :content="t('toolbar.show')" placement="bottom-right">
@@ -81,7 +62,9 @@ const container = inject('container')
 const editor = inject('editor')
 const savedAt = inject('savedAt')
 const options = inject('options')
+console.log('options', options)
 const $toolbar = useState('toolbar', options)
+console.log('toolbar', $toolbar)
 let statusPopup = $ref(false)
 const online = useOnline()
 

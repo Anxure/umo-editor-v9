@@ -1,37 +1,22 @@
 <template>
-  <t-config-provider
-    :key="options.editorKey"
-    :global-config="{
-      ...localeConfig[locale],
-      classPrefix: 'umo',
-    }"
-  >
-    <div
-      :id="container.substr(1)"
-      class="umo-editor-container"
-      :class="{
-        'toolbar-classic': isRecord($toolbar) && $toolbar.mode === 'classic',
-        'toolbar-ribbon': isRecord($toolbar) && $toolbar.mode === 'ribbon',
-        'preview-mode': page.preview?.enabled,
-        'laser-pointer': page.preview?.enabled && page.preview?.laserPointer,
-        'umo-editor-is-fullscreen': fullscreen,
-        'umo-editor-is-typerwriterRuning': !typeWriterIsRunning,
-      }"
-      :style="{
-        height: options.height,
-        zIndex: fullscreen ? options.fullscreenZIndex : 'unset',
-      }"
-    >
+  <t-config-provider :key="options.editorKey" :global-config="{
+    ...localeConfig[locale],
+    classPrefix: 'umo',
+  }">
+    <div :id="container.substr(1)" class="umo-editor-container" :class="{
+      'toolbar-classic': isRecord($toolbar) && $toolbar.mode === 'classic',
+      'toolbar-ribbon': isRecord($toolbar) && $toolbar.mode === 'ribbon',
+      'preview-mode': page.preview?.enabled,
+      'laser-pointer': page.preview?.enabled && page.preview?.laserPointer,
+      'umo-editor-is-fullscreen': fullscreen,
+      'umo-editor-is-typerwriterRuning': !typeWriterIsRunning,
+    }" :style="{
+      height: options.height,
+      zIndex: fullscreen ? options.fullscreenZIndex : 'unset',
+    }">
       <header class="umo-toolbar">
-        <toolbar
-          :key="toolbarKey"
-          @menu-change="(event: any) => emits('menuChange', event)"
-        >
-          <template
-            v-for="item in options.toolbar?.menus"
-            :key="item"
-            #[`toolbar_${item}`]="slotProps"
-          >
+        <toolbar :key="toolbarKey" @menu-change="(event: any) => emits('menuChange', event)">
+          <template v-for="item in options.toolbar?.menus" :key="item" #[`toolbar_${item}`]="slotProps">
             <slot :name="`toolbar_${item}`" v-bind="slotProps" />
           </template>
           <template #extended-actions>
@@ -1283,25 +1268,30 @@ defineExpose({
   color: var(--umo-text-color);
   font-family: var(--umo-font-family);
   position: relative !important;
+
   .umo-toolbar,
   .umo-footer {
     background-color: var(--umo-color-white);
   }
+
   .umo-main {
     flex: 1;
     background-color: var(--umo-container-background);
     overflow: hidden;
   }
+
   &.preview-mode {
     &.laser-pointer {
       .umo-main {
         cursor: url('@/assets/images/laser-pointer.svg'), auto;
       }
     }
+
     .umo-toolbar {
       display: none;
     }
   }
+
   &.umo-editor-is-fullscreen {
     position: fixed !important;
     top: 0;
@@ -1309,8 +1299,10 @@ defineExpose({
     right: 0;
     bottom: 0;
   }
+
   &:not(.umo-editor-is-typerwriterRuning) {
-    pointer-events: none; /* 核心：禁用所有鼠标事件 */
+    pointer-events: none;
+    /* 核心：禁用所有鼠标事件 */
     /* 可选：添加半透明效果提示不可交互 */
     opacity: 0.9;
   }

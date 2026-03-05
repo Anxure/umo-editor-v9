@@ -47,10 +47,10 @@ const handleFullTextCorrection = () => {
 }
 const options = $ref({
   toolbar: {
-    showToggleToolbar: false,
-    show: false,
-    // defaultMode: 'classic',
-    menus: ['base'],
+    // showToggleToolbar: false,
+    // show: false,
+    defaultMode: 'ribbon',
+    // menus: ['base'],
   },
   document: {
     title: '测试文档',
