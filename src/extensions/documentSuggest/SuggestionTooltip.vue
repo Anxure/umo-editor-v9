@@ -3,7 +3,7 @@
         <teleport :to="element.element">
             <span :key="element.element" ref="reference" />
         </teleport>
-        <div v-if="isOpen" class="suggestion-tooltip-parent" ref="floating" :style="floatingStyles">
+        <div v-if="isOpen" class="suggestion-tooltip-parent" ref="floating" :style="{...floatingStyles, zIndex: 100}">
             <div class="suggestion-tooltip">
                 <div class="top">
                     <div :class="['replacement-option', suggestion.severity === 'error' ? 'error' : suggestion.severity === 'warning' ? 'warning' : 'info']"

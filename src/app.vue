@@ -4,10 +4,32 @@
 
       <!-- ykx测试纠错 -->
       <div v-if="isYkxDev" class="ykx-test-editor">
-        <umo-editor ref="editorRef" v-bind="testOptions">
-        </umo-editor>
+        <div style="height: 500px;">
+
+          <umo-editor ref="editorRef" v-bind="testOptions">
+          </umo-editor>
+        </div>
+
         <div class="test-panel">
           <button @click="handleFullTextCorrection">纠错</button>
+          <div style="margin-top: 10px;">
+            <button @click="handleApplyAllSuggestions">应用所有</button>
+            <button @click="handleRejectAllSuggestions">拒绝所有</button>
+          </div>
+
+          <ul>
+            <li v-for="suggestion in editorSuggestions" :key="suggestion.id">
+              <div>
+                {{ suggestion.message }}
+              </div>
+              <div>
+                <button @click="handleApplySuggestion(suggestion)">应用</button>
+                <button @click="handleRejectSuggestion(suggestion)">拒绝</button>
+              </div>
+
+            </li>
+
+          </ul>
         </div>
       </div>
       <umo-editor v-else ref="editorRef" v-bind="options" @exportWord="handleExportWord"
@@ -16,7 +38,7 @@
           <!-- <umo-menu-button>1111</umo-menu-button> -->
         </template>
         <template #extended-actions>
-          <!-- <umo-menu-button>1111</umo-menu-button> -->
+          <umo-menu-button>1111</umo-menu-button>
         </template>
       </umo-editor>
     </div>
@@ -32,6 +54,10 @@ import { shortId } from '@/utils/short-id'
 
 const editorRef = useTemplateRef('editorRef')
 const isYkxDev = import.meta.env.MODE === 'ykx'
+const editorSuggestions = $computed(() => {
+  const editor = editorRef.value?.useEditor?.()
+  return editor?.storage.documentSuggest?.suggestions ?? []
+})
 const templates = [
   {
     title: '工作任务',
@@ -58,10 +84,11 @@ const handleFullTextCorrection = () => {
   const editor = editorRef.value?.useEditor?.()
   editor?.chain().loadSuggestions().run()
 }
+
 const options = $ref({
   toolbar: {
     showToggleToolbar: false,
-    show: false,
+    // show: false,
     // defaultMode: 'classic',
     menus: ['base'],
   },
@@ -150,7 +177,98 @@ const options = $ref({
     console.log(id, url, type)
   },
 })
+
+
+/**
+ * 根据错误词、所在段落文本和段落的全局位置，计算错误词的全局坐标
+ * 
+ * @param {Object} suggestion - 后端返回的建议对象
+ * @param {string} suggestion.text - 包含错误的完整段落文本
+ * @param {string} suggestion.error_word - 具体的错误词
+ * @param {Object} suggestion.original_text_pos - 段落在全局的 {from, to}
+ * @param {number} suggestion.appear_times - 该错误词在段落中是第几次出现 (从 1 开始)
+ * @returns {Object|null} - 返回 { from: number, to: number }，如果找不到则返回 null
+ */
+function calculateErrorPosition(suggestion: any) {
+  const { text, error_word, original_text_pos, appear_times } = suggestion;
+
+  // 1. 基础校验
+  if (!text || !error_word || !original_text_pos) {
+    console.warn("缺少必要字段，无法计算坐标");
+    return null;
+  }
+
+  const segmentStart = original_text_pos.from;
+
+  // 2. 在 text 中查找 error_word 的第 appear_times 次出现位置
+  let startIndex = -1;
+  let count = 0;
+  let currentSearchIndex = 0;
+
+  // 循环查找，直到找到第 N 次出现
+  while (count < appear_times) {
+    const foundIndex = text.indexOf(error_word, currentSearchIndex);
+
+    if (foundIndex === -1) {
+      // 如果还没找到第 N 次就结束了，说明数据有问题或 appear_times 越界
+      console.warn(`未在文本中找到第 ${appear_times} 次出现的错误词 "${error_word}"`);
+      return null;
+    }
+
+    count++;
+    if (count === appear_times) {
+      startIndex = foundIndex;
+    } else {
+      // 继续往后找，避免死循环 (从找到位置的下一个字符开始)
+      currentSearchIndex = foundIndex + 1;
+    }
+  }
+
+  if (startIndex === -1) {
+    return null;
+  }
+
+  // 3. 计算全局绝对坐标
+  const globalFrom = segmentStart + startIndex;
+  const globalTo = globalFrom + error_word.length;
+
+  return {
+    from: globalFrom,
+    to: globalTo,
+    original_hit_text: text.slice(startIndex, globalTo - 1)
+  };
+}
+
+const editorScrollToSuggestion = (from: number) => {
+  const editor = editorRef.value?.useEditor?.()
+  editor?.commands.setTextSelection(from);
+  const { node } = editor?.view.domAtPos(
+    editor?.state.selection.anchor,
+  )
+    (node as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+const handleApplySuggestion = (suggestion: any) => {
+  const editor = editorRef.value?.useEditor?.()
+  editor?.chain().applySuggestion(suggestion.id).run()
+  editorScrollToSuggestion(suggestion.text_pos.from)
+}
+const handleRejectSuggestion = (suggestion: any) => {
+  const editor = editorRef.value?.useEditor?.()
+  editor?.chain().rejectSuggestion(suggestion.id).run()
+  editorScrollToSuggestion(suggestion.text_pos.from)
+}
+const handleApplyAllSuggestions = () => {
+  const editor = editorRef.value?.useEditor?.()
+  editor?.chain().applyAllSuggestions().run()
+}
+const handleRejectAllSuggestions = () => {
+  const editor = editorRef.value?.useEditor?.()
+  editor?.chain().rejectAllSuggestions().run()
+}
 const testOptions = $ref({
+  document: {
+    content: '<p data-node-id="E0kcQn6a">新闻媒体基于学术研究和观点讨论而对本研究简报的引用受到鼓励，但这种引用必须以不损害本研究机构的知识产权和商业利益为前提。新闻媒体对研究简报的引用应该获得本几构公关传媒部的许可，但究简报的观点不得对本研进行有悖原意的引用和修改。</p><p data-node-id="dj2hicfm">我是一段策试文字111，我是测试文字一段222</p><p data-node-id="QszUBR5J">我是一段有错别字的问字</p>'
+  },
   documentSuggestConfig: {
     rules: [
       {
@@ -189,18 +307,18 @@ const testOptions = $ref({
           }
         }
       },
-      // {
-      //     id: 'RULE_GRAMMAR_PROBLEM',
-      //     name: '语法性问题',
-      //     description: '语法性问题，核心是找语句不通顺的，你需要把纠错后的文本返回到fixCommand的params中的text字段中',
-      //     severity: 'info',
-      //     fixCommand: {
-      //         action: 'replaceText',
-      //         params: {
-      //             text: '',
-      //         }
-      //     }
-      // },
+      {
+        id: 'RULE_GRAMMAR_PROBLEM',
+        name: '语法性问题',
+        description: '语法性问题，核心是找语句不通顺的，你需要把纠错后的文本返回到fixCommand的params中的text字段中',
+        severity: 'info',
+        fixCommand: {
+          action: 'replaceText',
+          params: {
+            text: '',
+          }
+        }
+      },
       {
         id: 'RULE_GRAMMAR_PROBLEM',
         name: '错别字问题',
@@ -227,7 +345,7 @@ const testOptions = $ref({
       // },
     ],
     fetchSuggestions: async (doc: any, rules: any[], editor: any) => {
-      const openTest = false;
+      const openTest = true;
       if (!openTest) {
         let suggestions = [];
         const resp = await fetch('http://localhost:8010/api/v1/ai/document/check', {
@@ -245,40 +363,41 @@ const testOptions = $ref({
         }
         const payload = await resp.json();
         suggestions = (payload.data.suggestions || []);
-        return suggestions;
+        return suggestions.map((item) => ({ ...item, handleStatus: 'todo' }));
       } else {
-        return Promise.resolve([
+        console.log(doc);
+        const targetList = [
           {
-            "id": "d61a82fb-d18b-483b-a632-af6d7998c1d8",
-            "node_id": "dJmHlNge",
-            "message": "错别字：'本几构'应为'本机构'；'究简报'应为'研究简报'；'本研'应为'本研究'",
+            "id": "82a46812-c389-4e0b-9aff-8cf30352d754",
+            "message": "语法性问题，语句不通顺",
             "rule_id": "RULE_GRAMMAR_PROBLEM",
-            "text_index": 0,
-            "text_pos": {
-              "from": 118,
-              "to": 121
+            "appear_times": 1,
+            "error_word": "本几构公关传媒部",
+            "original_text_pos": {
+              "from": 1,
+              "to": 114
             },
+            "text": "新闻媒体基于学术研究和观点讨论而对本研究简报的引用受到鼓励，但这种引用必须以不损害本研究机构的知识产权和商业利益为前提。新闻媒体对研究简报的引用应该获得本几构公关传媒部的许可，但究简报的观点不得对本研进行有悖原意的引用和修改。",
             "severity": "info",
             "fixCommand": {
               "action": "replaceText",
               "params": {
-                "text": "本机构"
+                "text": "本机构公关传媒部"
               }
             },
-            "meta": {
-              "section": "第一段"
-            }
+            "meta": {}
           },
           {
-            "id": "e111309e-5806-4d53-bc28-c32649b5eaae",
-            "node_id": "dJmHlNge",
-            "message": "错别字：'本几构'应为'本机构'；'究简报'应为'研究简报'；'本研'应为'本研究'",
+            "id": "eeeadefd-f606-4da2-b67b-04998fe7cec0",
+            "message": "语法性问题，语句不通顺",
             "rule_id": "RULE_GRAMMAR_PROBLEM",
-            "text_index": 0,
-            "text_pos": {
-              "from": 137,
-              "to": 144
+            "appear_times": 1,
+            "error_word": "究简报",
+            "original_text_pos": {
+              "from": 1,
+              "to": 114
             },
+            "text": "新闻媒体基于学术研究和观点讨论而对本研究简报的引用受到鼓励，但这种引用必须以不损害本研究机构的知识产权和商业利益为前提。新闻媒体对研究简报的引用应该获得本几构公关传媒部的许可，但究简报的观点不得对本研进行有悖原意的引用和修改。",
             "severity": "info",
             "fixCommand": {
               "action": "replaceText",
@@ -286,20 +405,19 @@ const testOptions = $ref({
                 "text": "研究简报"
               }
             },
-            "meta": {
-              "section": "第一段"
-            }
+            "meta": {}
           },
           {
-            "id": "8cf26127-932c-45f6-8243-a51117a1c21e",
-            "node_id": "dJmHlNge",
-            "message": "错别字：'本几构'应为'本机构'；'究简报'应为'研究简报'；'本研'应为'本研究'",
+            "id": "b2dfdda4-a0b8-416c-88d9-00947e183dea",
+            "message": "语法性问题，语句不通顺",
             "rule_id": "RULE_GRAMMAR_PROBLEM",
-            "text_index": 0,
-            "text_pos": {
-              "from": 159,
-              "to": 162
+            "appear_times": 1,
+            "error_word": "本研",
+            "original_text_pos": {
+              "from": 1,
+              "to": 114
             },
+            "text": "新闻媒体基于学术研究和观点讨论而对本研究简报的引用受到鼓励，但这种引用必须以不损害本研究机构的知识产权和商业利益为前提。新闻媒体对研究简报的引用应该获得本几构公关传媒部的许可，但究简报的观点不得对本研进行有悖原意的引用和修改。",
             "severity": "info",
             "fixCommand": {
               "action": "replaceText",
@@ -307,20 +425,19 @@ const testOptions = $ref({
                 "text": "本研究"
               }
             },
-            "meta": {
-              "section": "第一段"
-            }
+            "meta": {}
           },
           {
-            "id": "e86dd875-2509-4dc9-811c-46f4bde0433f",
-            "node_id": "BVreN3Ww",
-            "message": "错别字：'问字'应为'文字'",
+            "id": "67e8c315-2972-4c3e-927e-e2cab97e34ff",
+            "message": "错别字问题",
             "rule_id": "RULE_GRAMMAR_PROBLEM",
-            "text_index": 0,
-            "text_pos": {
-              "from": 11,
-              "to": 15
+            "appear_times": 1,
+            "error_word": "问字",
+            "original_text_pos": {
+              "from": 141,
+              "to": 152
             },
+            "text": "我是一段有错别字的问字",
             "severity": "info",
             "fixCommand": {
               "action": "replaceText",
@@ -328,14 +445,23 @@ const testOptions = $ref({
                 "text": "文字"
               }
             },
-            "meta": {
-              "section": "第三段"
-            }
+            "meta": {}
           }
-        ])
+        ];
+        const result = targetList.map((item) => {
+          const calcInfo = calculateErrorPosition(item);
+          return {
+            ...item,
+            original_hit_text: calcInfo?.original_hit_text,
+            text_pos: {
+              from: calcInfo?.from,
+              to: calcInfo?.to,
+            },
+            handleStatus: 'todo'
+          }
+        });
+        return Promise.resolve(result);
       }
-
-
     }
   },
 })
