@@ -271,18 +271,22 @@ export const getDefaultExtensions = ({
         ruleTitle: string;
         isSelected: boolean;
         range: { from: number; to: number };
-        getDefaultDecorations: () => Decoration[];
+        getDefaultDecorations: () => Decoration[] | null;
       }) {
         // 如果当前 tooltip 关联的 suggestion 已经不在列表中（如被拒绝/全部应用），主动清空 tooltip
+
+        const decorations = getDefaultDecorations();
         if (
           tooltipElement.value &&
           !allSuggestions.some((s) => s.id === tooltipElement.value!.suggestion.id)
         ) {
           tooltipElement.value = null;
-          return [];
+          return decorations;
         }
-        const decorations = getDefaultDecorations();
-        if (isSelected) {
+        if (decorations === null) {
+          return null;
+        }
+        if (isSelected && suggestion.handleStatus == 'todo') {
           decorations.push(
             Decoration.widget(range.to, () => {
               const element = document.createElement("span");
