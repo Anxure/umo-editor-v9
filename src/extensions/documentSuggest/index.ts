@@ -24,6 +24,7 @@ export interface Suggestion {
     severity: 'error' | 'warning' | 'info';
     text: string;
     originalHitText: string;
+    notNeedFix?: boolean; // 是否需要同步修复（某些场景不需要联动）
     /**
      * 后端返回的修复命令定义
      */
@@ -269,29 +270,27 @@ export const DocumentSuggest = Extension.create({
                 editor.view.dispatch(tr);
                 return execFlag;
             },
-            applyAllSuggestions: () => ({ editor }) => {
+            applyAllSuggestions: () => ({ editor, chain }) => {
                 const storage = this.storage;
 
                 // 简单顺序执行，执行前实时根据 node_id + text_index 计算位置
                 for (const s of [...storage.suggestions]) {
                     const range = getSuggestionRange({ doc: editor.state.doc, suggestion: s });
-                    if (!range) continue;
+                    if (!range || range.from >= range.to) continue;
 
                     const fix = s.fixCommand;
                     const action = fix?.action;
                     const params = fix?.params || {};
                     if (!action) continue;
 
-                    const chain = editor.chain().focus();
-
                     switch (action) {
                         case 'setHeading': {
                             const level = (Number(params.level) || 1) as any;
-                            chain.setTextSelection(range).setHeading({ level }).run();
+                            chain().focus().setTextSelection(range).setHeading({ level }).run();
                             break;
                         }
                         case 'resetTextStyle': {
-                            chain
+                            chain().focus()
                                 .setTextSelection(range)
                                 .unsetColor()
                                 .unsetMark?.('backgroundColor')
@@ -300,7 +299,7 @@ export const DocumentSuggest = Extension.create({
                         }
                         case 'replaceText': {
                             const text = params.text ?? '';
-                            chain.insertContentAt(range, text).run();
+                            chain().focus().insertContentAt(range, text).run();
                             break;
                         }
                         default:
@@ -309,7 +308,7 @@ export const DocumentSuggest = Extension.create({
                 }
                 storage.suggestions = storage.suggestions.map((s: Suggestion) => ({
                     ...s,
-                    handleStatus: 'accepted'
+                    handleStatus: s.notNeedFix ? s.handleStatus : 'accepted' // 特殊场景处理
                 }));
                 const tr = editor.state.tr.setMeta(documentSuggestPluginKey, {
                     type: 'rebuildFromStorage',
@@ -503,7 +502,7 @@ export const DocumentSuggest = Extension.create({
 
                             // 映射所有待显示的建议坐标
                             newSuggestions = this.storage.suggestions.map(s => {
-                                if (s.handleStatus !== 'todo' || s.textPos === undefined) {
+                                if (s.handleStatus !== 'todo' || s.textPos === undefined || s.notNeedFix) {
                                     return s;
                                 }
 

@@ -392,31 +392,21 @@ const testOptions = $ref({
               }
             },
             "meta": {
-              "section": "正文"
+              "section": "无"
             },
             "text": "我是一段有错别字的问字"
           },
           {
-            "id": "2",
-            "message": "错别字",
-            "ruleId": "9",
-            "appearTimes": "1",
-            "errorWord": "搓别字",
-            "originalTextPos": {
-              "from": 154,
-              "to": 166
-            },
-            "severity": "warning",
-            "fixCommand": {
-              "action": "replaceText",
-              "params": {
-                "text": "错别字"
-              }
-            },
-            "meta": {
-              "section": "正文"
-            },
-            "text": "我是一段有搓别字的问字1"
+            "id": "validScopeMsgMap",
+            "message": "各地动态内容字数需满足：≥300 且 <600 字",
+            "ruleId": null,
+            "appearTimes": null,
+            "errorWord": null,
+            "originalTextPos": null,
+            "severity": null,
+            "fixCommand": null,
+            "meta": null,
+            "text": null
           }
         ];
         const result = targetList.map((item) => {
@@ -424,6 +414,7 @@ const testOptions = $ref({
           return {
             ...item,
             originalHitText: calcInfo?.originalHitText ?? '',
+            notNeedFix: item.id === 'validScopeMsgMap', // 增加一个不需修复的标识
             textPos: {
               from: calcInfo?.from,
               to: calcInfo?.to,
@@ -431,7 +422,6 @@ const testOptions = $ref({
             handleStatus: 'todo'
           }
         });
-        debugger;
         return Promise.resolve(result);
       }
     }
