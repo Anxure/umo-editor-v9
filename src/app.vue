@@ -16,7 +16,6 @@
             <button @click="handleApplyAllSuggestions">应用所有</button>
             <button @click="handleRejectAllSuggestions">拒绝所有</button>
           </div>
-
           <ul>
             <li v-for="suggestion in editorSuggestions" :key="suggestion.id">
               <div>
@@ -33,7 +32,8 @@
           </ul>
         </div>
       </div>
-      <umo-editor v-else ref="editorRef" v-bind="options" @exportWord="handleExportWord" @customSaveContent="handleCustomSaveContent">
+      <umo-editor v-else ref="editorRef" v-bind="options" @exportWord="handleExportWord"
+        @customSaveContent="handleCustomSaveContent">
         <template #paragraph_left_menu="props">
           <!-- <umo-menu-button>1111</umo-menu-button> -->
         </template>
@@ -51,13 +51,20 @@
 
 <script setup lang="ts">
 import { shortId } from '@/utils/short-id'
+import { useEditorStorage } from '@/hooks/useEditorStrorage'
 
 const editorRef = useTemplateRef('editorRef')
 const isYkxDev = import.meta.env.MODE === 'ykx'
-const editorSuggestions = $computed(() => {
-  const editor = editorRef.value?.useEditor?.()
-  return editor?.storage.documentSuggest?.suggestions ?? []
-})
+const editorInstanceRef = computed(() => editorRef.value?.useEditor?.() ?? null)
+console.log('editorInstance', editorInstanceRef.value)
+// 通过hook拿到建议列表，保持更新
+
+const editorSuggestions = useEditorStorage<any[], any[]>(
+  editorInstanceRef,
+  (storage) => (storage as any).documentSuggest?.suggestions ?? [],
+  [],
+)
+// const cptSuggestions = computed(() => editorSuggestions.value)
 const templates = [
   {
     title: '工作任务',
@@ -231,10 +238,11 @@ function calculateErrorPosition(suggestion: any) {
   // 3. 计算全局绝对坐标
   const globalFrom = segmentStart + startIndex;
   const globalTo = globalFrom + errorWord.length;
+  const endIndex = startIndex + errorWord.length;
   return {
     from: globalFrom,
     to: globalTo,
-    originalHitText: text.slice(startIndex, globalTo - 1)
+    originalHitText: text.slice(startIndex, endIndex)
   };
 }
 
@@ -266,7 +274,7 @@ const handleRejectAllSuggestions = () => {
 }
 const testOptions = $ref({
   document: {
-    content: '<p data-node-id="E0kcQn6a">新闻媒体基于学术研究和观点讨论而对本研究简报的引用受到鼓励，但这种引用必须以不损害本研究机构的知识产权和商业利益为前提。新闻媒体对研究简报的引用应该获得本几构公关传媒部的许可，但究简报的观点不得对本研进行有悖原意的引用和修改。</p><p data-node-id="dj2hicfm">我是一段策试文字111，我是测试文字一段222</p><p data-node-id="QszUBR5J">我是一段有错别字的问字</p>'
+    content: '<p data-node-id="E0kcQn6a">新闻媒体基于学术研究和观点讨论而对本研究简报的引用受到鼓励，但这种引用必须以不损害本研究机构的知识产权和商业利益为前提。新闻媒体对研究简报的引用应该获得本几构公关传媒部的许可，但究简报的观点不得对本研进行有悖原意的引用和修改。</p><p data-node-id="dj2hicfm">我是一段策试文字111，我是测试文字一段222</p><p data-node-id="QszUBR5J">我是一段有错别字的问字</p><p data-node-id="QszUBR5J">我是一段有搓别字的问字1</p>'
   },
   documentSuggestConfig: {
     rules: [
@@ -366,29 +374,51 @@ const testOptions = $ref({
       } else {
         console.log(doc);
         const targetList = [
-        {
+          {
             "id": "1",
-            "message": "文本中出现错别字",
+            "message": "错别字",
             "ruleId": "9",
             "appearTimes": "1",
             "errorWord": "问字",
             "originalTextPos": {
-                "from": 141,
-                "to": 152
+              "from": 141,
+              "to": 152
             },
             "severity": "warning",
             "fixCommand": {
-                "action": "replaceText",
-                "params": {
-                    "text": "文字"
-                }
+              "action": "replaceText",
+              "params": {
+                "text": "文字"
+              }
             },
             "meta": {
-                "section": "错别字规范"
+              "section": "正文"
             },
             "text": "我是一段有错别字的问字"
-        }
-    ];
+          },
+          {
+            "id": "2",
+            "message": "错别字",
+            "ruleId": "9",
+            "appearTimes": "1",
+            "errorWord": "搓别字",
+            "originalTextPos": {
+              "from": 154,
+              "to": 166
+            },
+            "severity": "warning",
+            "fixCommand": {
+              "action": "replaceText",
+              "params": {
+                "text": "错别字"
+              }
+            },
+            "meta": {
+              "section": "正文"
+            },
+            "text": "我是一段有搓别字的问字1"
+          }
+        ];
         const result = targetList.map((item) => {
           const calcInfo = calculateErrorPosition(item);
           return {
