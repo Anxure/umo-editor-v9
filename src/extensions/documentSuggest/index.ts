@@ -334,8 +334,9 @@ export const DocumentSuggest = Extension.create({
             applyAllSuggestions: () => ({ editor, chain }) => {
                 const storage = this.storage;
 
-                // 简单顺序执行，执行前实时根据 node_id + text_index 计算位置
-                for (const s of [...storage.suggestions]) {
+                // 只处理当前仍为 todo 的建议，执行前实时根据 textPos 计算位置
+                const todoList = storage.suggestions.filter((s: Suggestion) => s.handleStatus === 'todo');
+                for (const s of todoList) {
                     const range = getSuggestionRange({ doc: editor.state.doc, suggestion: s });
                     if (!range || range.from >= range.to) continue;
 
@@ -367,10 +368,19 @@ export const DocumentSuggest = Extension.create({
                             break;
                     }
                 }
-                storage.suggestions = storage.suggestions.map((s: Suggestion) => ({
-                    ...s,
-                    handleStatus: s.notNeedFix ? s.handleStatus : 'accepted' // 特殊场景处理
-                }));
+                // 仅同步 todo 项的状态；notNeedFix 在“应用”场景下保持原状
+                storage.suggestions = storage.suggestions.map((s: Suggestion) => {
+                    if (s.handleStatus !== 'todo') {
+                        return s;
+                    }
+                    if (s.notNeedFix) {
+                        return s;
+                    }
+                    return {
+                        ...s,
+                        handleStatus: 'accepted',
+                    };
+                });
                 const tr = editor.state.tr.setMeta(documentSuggestPluginKey, {
                     type: 'rebuildFromStorage',
                     isChangeSuggestions: true
@@ -380,10 +390,16 @@ export const DocumentSuggest = Extension.create({
             },
             rejectAllSuggestions: () => ({ editor }) => {
                 const storage = this.storage;
-                storage.suggestions = storage.suggestions.map((s: Suggestion) => ({
-                    ...s,
-                    handleStatus: 'ignored'
-                }));
+                // 只同步剩余 todo 项到 ignored（包括 notNeedFix）
+                storage.suggestions = storage.suggestions.map((s: Suggestion) => {
+                    if (s.handleStatus !== 'todo') {
+                        return s;
+                    }
+                    return {
+                        ...s,
+                        handleStatus: 'ignored',
+                    };
+                });
                 const tr = editor.state.tr.setMeta(documentSuggestPluginKey, {
                     type: 'rebuildFromStorage',
                     isChangeSuggestions: true
@@ -424,7 +440,7 @@ export const DocumentSuggest = Extension.create({
                 editor.view.dispatch(tr);
                 return true;
             },
-            pointSuggestion: (id: string) => ({ editor }) => {
+            pointSuggestion: (id: string) => ({ editor, chain }) => {
                 const storage = this.storage;
                 const target = storage.suggestions.find((s: Suggestion) => s.id === id);
                 if (!target) {
@@ -435,11 +451,9 @@ export const DocumentSuggest = Extension.create({
                     return false;
                 }
 
-                // 1. 聚焦并选中对应位置
-                editor
-                    .chain()
-                    .focus()
-                    .setTextSelection(range)
+                // 1. 聚焦并将光标落在范围的结束点（默认结束点）
+                chain().focus()
+                    .setTextSelection(range.to)
                     .run();
 
                 // 2. 滚动到视图中间
