@@ -27,6 +27,8 @@ export default Extension.create({
       types: ['heading', 'listItem', 'taskItem', 'paragraph'],
       minLevel: 0,
       maxLevel: 5,
+      // 一个缩进级别对应的 text-indent 大小，单位 em
+      indentSize: 2,
     }
   },
   addGlobalAttributes() {
@@ -38,12 +40,12 @@ export default Extension.create({
             default: null,
             renderHTML: (attributes) => {
               const { indent } = attributes
-              const { minLevel } = this.options
+              const { minLevel, indentSize } = this.options
               if (!indent || indent <= minLevel) {
                 return {}
               }
               return {
-                style: `text-indent: ${indent * 2}em;`,
+                style: `text-indent: ${indent * indentSize}em;`,
               }
             },
             // renderHTML: (attributes) => {
@@ -59,7 +61,6 @@ export default Extension.create({
             // },
             parseHTML: (element) => {
               const { textIndent } = element.style
-
               if (!textIndent) {
                 return null
               }
@@ -122,24 +123,13 @@ export default Extension.create({
       return tr
     }
     const applyIndent =
-      (direction: number) =>
+      (direction) =>
         () =>
-          ({
-            tr,
-            state,
-            dispatch,
-            editor,
-          }: {
-            tr: Transaction
-            state: EditorState
-            dispatch: Dispatch
-            editor: Editor
-          }) => {
-            const { selection } = state
-            tr.setSelection(selection)
+          ({ tr, state, dispatch }) => {
+            tr.setSelection(state.selection)
             tr = updateIndentLevel(tr, direction)
             if (tr.docChanged) {
-              if (isFunction(dispatch)) {
+              if (dispatch) {
                 dispatch(tr)
               }
               return true
