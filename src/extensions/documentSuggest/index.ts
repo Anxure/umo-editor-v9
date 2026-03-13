@@ -508,9 +508,11 @@ export const DocumentSuggest = Extension.create({
             }
             if (isDev) console.log(todoSuggestions);
             for (const s of todoSuggestions) {
+                // 这里调整为从storage里面从新获取suggestion（每次修复会更新最新的坐标）
+                const changedSuggestion = this.storage.suggestions.find((s: Suggestion) => s.id === s.id);
                 const range = getSuggestionRange({
                     doc,
-                    suggestion: s,
+                    suggestion: changedSuggestion,
                 });
                 if (isDev) console.log('range', range);
                 if (!range) {
