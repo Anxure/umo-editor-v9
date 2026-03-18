@@ -267,7 +267,7 @@ const handleApplySuggestion = (suggestion: any) => {
 }
 const handleRejectSuggestion = (suggestion: any) => {
   const editor = editorRef.value?.useEditor?.()
-  editor?.chain().rejectSuggestion(suggestion.id).run()
+  editor?.chain().rejectSuggestion(suggestion.id).run();
   editorPointToSuggestion(suggestion.id)
 }
 const handleApplyAllSuggestions = () => {
@@ -302,7 +302,7 @@ const handleConfirmImportHtml = () => {
 }
 const testOptions = $ref({
   document: {
-    content: '<p style="text-align: center;"><span style="font-family: &quot;Calibri Light&quot;; font-size: 16pt;">新闻媒体报道</span></p><p style="text-align: left;"><span style="font-family: Calibri; font-size: 12pt;">新闻媒体基于学术研究和观点讨论而对本研究简报的引用受到鼓励，但这种引用必须以</span><span style="font-family: Calibri; font-size: 15pt;">不损害本研究机构的知识产权和商业利益为前提。新闻媒体对研究简报的引用应该获得本几构公关传媒部的许可，但</span><span style="font-family: Calibri; font-size: 12pt;">究简报的观点不得对本研进行有悖原意的引用和修改。</span></p><p style="text-align: left;"><span style="font-family: Calibri; font-size: 12pt;">我是一段策试文字111，我是测试文字一段222</span></p><p><span style="font-family: Calibri; font-size: 12pt;">我是一段有错别字的问字</span></p><p><br></p><p></p>'
+    content: '<p style="text-align: center;"><span style="font-family: &quot;Calibri Light&quot;; font-size: 16pt;">新闻媒体报道</span></p><p style="text-align: left;text-indent: 32pt;"><span style="font-family: Calibri; font-size: 12pt;">新闻媒体基于学术研究和观点讨论而对本研究简报的引用受到鼓励，但这种引用必须以</span><span style="font-family: Calibri; font-size: 15pt;">不损害本研究机构的知识产权和商业利益为前提。新闻媒体对研究简报的引用应该获得本几构公关传媒部的许可，但</span><span style="font-family: Calibri; font-size: 12pt;">究简报的观点不得对本研进行有悖原意的引用和修改。</span></p><p style="text-align: left;"><span style="font-family: Calibri; font-size: 12pt;">我是一段策试文字111，我是测试文字一段222</span></p><p><span style="font-family: Calibri; font-size: 12pt;">我是一段有错别字的问字</span></p><p><br></p><p></p>'
   },
   documentSuggestConfig: {
     onSuggestionClick: (suggestion: any) => {
@@ -407,7 +407,7 @@ const testOptions = $ref({
         const targetList = [
           {
             "id": "validScopeMsgMap",
-            "message": "当前正文需为宋体\n当前正文字号需为小四",
+            "message": "分析研究需包含现状、问题、意见建议三部分内容,当前缺失:现状、问题、意见建议",
             "ruleId": null,
             "appearTimes": null,
             "errorWord": null,
@@ -419,51 +419,7 @@ const testOptions = $ref({
           },
           {
             "id": "1",
-            "message": "错别字规范：'本几构公关传媒部'应为'本机构公关传媒部'",
-            "ruleId": "9",
-            "appearTimes": "1",
-            "errorWord": "本几构公关传媒部",
-            "originalTextPos": {
-              "from": 47,
-              "to": 98
-            },
-            "severity": "warning",
-            "fixCommand": {
-              "action": "replaceText",
-              "params": {
-                "text": "本机构公关传媒部"
-              }
-            },
-            "meta": {
-              "section": "新闻媒体对研究简报的引用"
-            },
-            "text": "不损害本研究机构的知识产权和商业利益为前提。新闻媒体对研究简报的引用应该获得本几构公关传媒部的许可，但"
-          },
-          {
-            "id": "2",
-            "message": "语法性差错规范：'究简报的观点不得对本研进行有悖原意的引用和修改。'应为'研究简报的观点不得被有悖原意地引用和修改。'",
-            "ruleId": "10",
-            "appearTimes": "1",
-            "errorWord": "究简报的观点不得对本研进行有悖原意的引用和修改。",
-            "originalTextPos": {
-              "from": 98,
-              "to": 122
-            },
-            "severity": "warning",
-            "fixCommand": {
-              "action": "replaceText",
-              "params": {
-                "text": "研究简报的观点不得被有悖原意地引用和修改。"
-              }
-            },
-            "meta": {
-              "section": "研究简报的引用和修改"
-            },
-            "text": "究简报的观点不得对本研进行有悖原意的引用和修改。"
-          },
-          {
-            "id": "3",
-            "message": "错别字规范：'问字'应为'文字'",
+            "message": "错别字：'问字' 应为 '文字'",
             "ruleId": "9",
             "appearTimes": "1",
             "errorWord": "问字",
@@ -479,7 +435,7 @@ const testOptions = $ref({
               }
             },
             "meta": {
-              "section": "测试文本"
+              "section": "content"
             },
             "text": "我是一段有错别字的问字"
           }

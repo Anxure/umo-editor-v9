@@ -1,11 +1,9 @@
-import { type Dispatch, type Editor, Extension } from '@tiptap/core'
+import { Extension } from '@tiptap/core'
 import {
   AllSelection,
-  type EditorState,
   TextSelection,
   type Transaction,
 } from '@tiptap/pm/state'
-import { isFunction } from '@tool-belt/type-predicates'
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -19,7 +17,79 @@ declare module '@tiptap/core' {
 }
 
 // @weiruo/tiptap-extension-indent Version:2.0.4-1
-const classAttrPrefix = 'indent-'
+
+const ptToPx = (pt: number) => pt * (96 / 72)
+
+type IndentParseOptions = {
+  indentSize: number
+  minLevel: number
+}
+
+export const parseIndentLevelFromElement = (
+  element: HTMLElement,
+  options: IndentParseOptions,
+): number | null => {
+  const textIndent = element.style.textIndent?.trim()
+  if (!textIndent) {
+    return null
+  }
+
+  const match = textIndent.match(/^([\d.]+)\s*([a-z%]*)$/i)
+  if (!match) {
+    return null
+  }
+
+  const rawValue = Number.parseFloat(match[1])
+  if (Number.isNaN(rawValue)) {
+    return null
+  }
+
+  const unit = (match[2] ?? '').toLowerCase()
+
+  // `em` is relative to the element itself, so we can compute the level
+  // without relying on computed styles (important for detached DOM nodes).
+  if (unit === 'em') {
+    const level = Math.round(rawValue / options.indentSize)
+    return level > options.minLevel ? level : null
+  }
+
+  // For other units we normalize to px, then divide by "indentSize * 1em".
+  // If computed styles are unavailable (e.g. detached nodes), fall back to root/16px.
+  const computedFontSize = Number.parseFloat(getComputedStyle(element).fontSize)
+  const rootFontSize = Number.parseFloat(
+    getComputedStyle(document.documentElement).fontSize,
+  )
+  const fontSizePx =
+    !Number.isNaN(computedFontSize) && computedFontSize > 0
+      ? computedFontSize
+      : !Number.isNaN(rootFontSize) && rootFontSize > 0
+        ? rootFontSize
+        : 16
+
+  const rootFontSizePx =
+    !Number.isNaN(rootFontSize) && rootFontSize > 0 ? rootFontSize : fontSizePx
+
+  const pxValue =
+    unit === 'rem'
+      ? rawValue * (rootFontSizePx || fontSizePx)
+      : unit === 'pt'
+        ? ptToPx(rawValue)
+        : unit === 'px' || unit === ''
+          ? rawValue
+          : null
+  if (pxValue === null) {
+    return null
+  }
+
+  const basePx = options.indentSize * fontSizePx
+  if (!basePx || Number.isNaN(basePx)) {
+    return null
+  }
+
+  const level = Math.round(pxValue / basePx)
+  return level > options.minLevel ? level : null
+}
+
 export default Extension.create({
   name: 'indent',
   addOptions() {
@@ -60,24 +130,11 @@ export default Extension.create({
             //   return {}
             // },
             parseHTML: (element) => {
-              const { textIndent } = element.style
-              if (!textIndent) {
-                return null
-              }
-              const match = textIndent.match(/([\d.]+)/)
-              if (!match) {
-                return null
-              }
-              const value = Number.parseFloat(match[1])
-              if (Number.isNaN(value)) {
-                return null
-              }
-              const base = Number.parseFloat(this.options.indentSize)
-              if (!base) {
-                return null
-              }
-              const level = Math.round(value / base)
-              return level > this.options.minLevel ? level : null
+              // 通过单位换算，pt-> 多少个tab缩进
+              return parseIndentLevelFromElement(element, {
+                indentSize: this.options.indentSize,
+                minLevel: this.options.minLevel,
+              })
             },
           },
         },
@@ -123,7 +180,7 @@ export default Extension.create({
       return tr
     }
     const applyIndent =
-      (direction) =>
+      (direction: number) =>
         () =>
           ({ tr, state, dispatch }) => {
             tr.setSelection(state.selection)

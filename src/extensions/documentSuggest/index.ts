@@ -451,7 +451,7 @@ export const DocumentSuggest = Extension.create({
                     return false;
                 }
                 const range = getSuggestionRange({ doc: editor.state.doc, suggestion: target });
-                if (!range) {
+                if (!range || !range.from || !range.to) {
                     return false;
                 }
 
@@ -466,7 +466,7 @@ export const DocumentSuggest = Extension.create({
                     (node as HTMLElement).scrollIntoView({
                         behavior: 'smooth',
                         block: 'center',
-                    });
+                    }); 
                 } catch (e) {
                     // domAtPos 失败时忽略滚动错误
                 }
@@ -485,6 +485,7 @@ export const DocumentSuggest = Extension.create({
         const pluginKey = documentSuggestPluginKey;
         // isChangeSuggestions - 是否修改了意见项（应用/拒绝的场景下，需要主动调用一次外部更新，关闭弹框，主要是处理最后一个关闭意见无法关闭弹框的场景）
         const buildDecorations = (state: EditorState, suggestions: Suggestion[], isChangeSuggestions?: boolean): DecorationSet => {
+            console.log(suggestions, 'suggestions');
             const todoSuggestions = suggestions.filter((s) => s.handleStatus == 'todo');
             const { doc, selection } = state as any;
             if (!todoSuggestions || todoSuggestions.length === 0) {
@@ -508,9 +509,11 @@ export const DocumentSuggest = Extension.create({
             }
             if (isDev) console.log(todoSuggestions);
             for (const s of todoSuggestions) {
+                // 这里调整为从storage里面从新获取suggestion（每次修复会更新最新的坐标）
+                const changedSuggestion = this.storage.suggestions.find((cs: Suggestion) => cs.id === s.id);
                 const range = getSuggestionRange({
                     doc,
-                    suggestion: s,
+                    suggestion: changedSuggestion,
                 });
                 if (isDev) console.log('range', range);
                 if (!range) {
