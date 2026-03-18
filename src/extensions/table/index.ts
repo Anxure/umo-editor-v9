@@ -1,3 +1,4 @@
+import { mergeAttributes } from '@tiptap/core'
 import Table from '@tiptap/extension-table'
 import { DOMParser as ProseMirrorDOMParser } from '@tiptap/pm/model'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
@@ -36,6 +37,60 @@ const extractStyles = (styleText: string) => {
 }
 
 const CustomTable = Table.extend({
+  renderHTML({ HTMLAttributes }) {
+    // 保持与 tiptap 默认结构一致：div.tableWrapper > table > tbody
+    // 关键点：把通过 addAttributes 注入的 HTMLAttributes 明确挂到 <table> 上，避免丢失 table.style 等
+    return [
+      'div',
+      { class: 'tableWrapper' },
+      ['table', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), ['tbody', 0]],
+    ]
+  },
+  addAttributes() {
+    return {
+      // @ts-ignore
+      ...this.parent?.(),
+      umoStyled: {
+        default: false,
+        parseHTML: (element: HTMLElement) => {
+          return Boolean(
+            element.getAttribute('style') ||
+            element.getAttribute('border') ||
+            element.getAttribute('cellpadding') ||
+            element.getAttribute('cellspacing'),
+          )
+        },
+        renderHTML: ({ umoStyled }: { umoStyled: boolean }) =>
+          umoStyled ? { 'data-umo-styled-table': 'true' } : {},
+      },
+      style: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.getAttribute('style') ?? null,
+        renderHTML: ({ style }: { style: string | null }) =>
+          style ? { style } : {},
+      },
+      border: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.getAttribute('border') ?? null,
+        renderHTML: ({ border }: { border: string | null }) =>
+          border ? { border } : {},
+      },
+      cellpadding: {
+        default: null,
+        parseHTML: (element: HTMLElement) =>
+          element.getAttribute('cellpadding') ?? null,
+        renderHTML: ({ cellpadding }: { cellpadding: string | null }) =>
+          cellpadding ? { cellpadding } : {},
+      },
+      cellspacing: {
+        default: null,
+        parseHTML: (element: HTMLElement) =>
+          element.getAttribute('cellspacing') ?? null,
+        renderHTML: ({ cellspacing }: { cellspacing: string | null }) =>
+          cellspacing ? { cellspacing } : {},
+      },
+    }
+  },
   addProseMirrorPlugins() {
     return [
       ...(this.parent?.() ?? []),

@@ -30,15 +30,23 @@
           </ul>
         </div>
       </div>
-      <umo-editor v-else ref="editorRef" v-bind="options" @exportWord="handleExportWord"
-        @customSaveContent="handleCustomSaveContent">
+      <umo-editor v-else ref="editorRef" v-bind="options" @exportWord="handleExportWord" @customSaveContent="handleCustomSaveContent">
         <template #paragraph_left_menu="props">
           <!-- <umo-menu-button>1111</umo-menu-button> -->
         </template>
         <template #extended-actions>
-          <umo-menu-button>1111</umo-menu-button>
+          <t-button size="small" variant="text" @click="handleOpenImportHtmlDialog">
+            导入HTML测试
+          </t-button>
+          <t-button size="small" variant="text" @click="handleGetHtmlContent">
+            获取html内容
+          </t-button>
         </template>
       </umo-editor>
+
+      <t-dialog v-model:visible="importHtmlDialogVisible" header="导入HTML测试" width="720px" :confirm-btn="{ content: '确定' }" :cancel-btn="{ content: '取消' }" @confirm="handleConfirmImportHtml" @close="handleCloseImportHtmlDialog" @cancel="handleCloseImportHtmlDialog">
+        <t-textarea v-model="importHtmlValue" placeholder="在这里粘贴/输入 HTML..." :autosize="{ minRows: 14, maxRows: 26 }" />
+      </t-dialog>
     </div>
     <!-- <div class="box">
       <umo-editor editor-key="testaaa" :toolbar="{ defaultMode: 'classic' }" />
@@ -269,6 +277,28 @@ const handleApplyAllSuggestions = () => {
 const handleRejectAllSuggestions = () => {
   const editor = editorRef.value?.useEditor?.()
   editor?.chain().rejectAllSuggestions().run()
+}
+
+let importHtmlDialogVisible = $ref(false)
+let importHtmlValue = $ref('')
+const handleOpenImportHtmlDialog = () => {
+  // const editor = editorRef.value?.useEditor?.()
+  // importHtmlValue = editor?.getHTML?.() ?? ''
+  importHtmlDialogVisible = true
+}
+const handleGetHtmlContent = () => {
+  const editor = editorRef.value?.useEditor?.()
+  console.log('importHtmlValue', editor?.getHTML?.())
+}
+const handleCloseImportHtmlDialog = () => {
+  importHtmlDialogVisible = false
+}
+const handleConfirmImportHtml = () => {
+  const editor = editorRef.value?.useEditor?.()
+  if (editor) {
+    editor.chain().setContent(importHtmlValue || '<p></p>', true).focus().run()
+  }
+  importHtmlDialogVisible = false
 }
 const testOptions = $ref({
   document: {

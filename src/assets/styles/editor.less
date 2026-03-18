@@ -293,6 +293,19 @@
     margin-left: auto;
     margin-right: auto;
 
+    // 如果表格来自“带内联样式的 HTML 导入”，优先尊重其自身样式，避免默认网格线覆盖
+    // 说明：有些情况下 table 的标记属性可能因为解析/粘贴路径没命中，因此这里也对 table[style] 生效
+    &[data-umo-styled-table='true'] {
+      // 取消编辑器对表格的默认“铺满/固定布局”，让导入 HTML 的 table-level style 生效
+      width: auto;
+      table-layout: auto;
+      td,
+      th {
+        border: none;
+        padding: 0;
+      }
+    }
+
     tr {
       page-break-inside: avoid;
       page-break-after: auto;

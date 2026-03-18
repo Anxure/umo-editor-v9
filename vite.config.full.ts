@@ -115,6 +115,12 @@ const cssConfig = {
 
 export default defineConfig({
   base: '/umo-editor',
+  server: {
+    host: true,
+  },
+  preview: {
+    host: true,
+  },
   plugins: [
     tsConfigPaths(),
     dts({

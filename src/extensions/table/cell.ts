@@ -5,33 +5,16 @@ const TableCellOptions = {
     return {
       // @ts-ignore
       ...this.parent?.(),
+      style: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.getAttribute('style') ?? null,
+        renderHTML: ({ style }: { style: string | null }) =>
+          style ? { style } : {},
+      },
       align: {
         default: null,
         parseHTML: (element: any) => element.getAttribute('align') ?? null,
         renderHTML: ({ align }: any) => ({ align }),
-      },
-      background: {
-        default: null,
-        parseHTML: (element: any) => {
-          const style = element.getAttribute('style') ?? ''
-          const match = style.match(/background(?:-color)?:\s*([^;]+)/i)
-          return match ? match[1].trim() : null
-        },
-        renderHTML: ({ background }: any) => {
-          return background ? { style: `background-color: ${background}` } : {}
-        },
-      },
-      color: {
-        default: null,
-        parseHTML: (element: any) => {
-          const style = element.getAttribute('style') ?? ''
-          const match = style.match(/(?<!background-)color:\s*([^;]+)/i)
-          if (style.includes('background-color')) return null
-          return match ? match[1].trim() : null
-        },
-        renderHTML: ({ color }: any) => {
-          return color ? { style: `color: ${color}` } : {}
-        },
       },
     }
   },
