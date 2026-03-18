@@ -466,7 +466,7 @@ export const DocumentSuggest = Extension.create({
                     (node as HTMLElement).scrollIntoView({
                         behavior: 'smooth',
                         block: 'center',
-                    });
+                    }); 
                 } catch (e) {
                     // domAtPos 失败时忽略滚动错误
                 }
