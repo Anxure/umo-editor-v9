@@ -61,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import UmoViewer from '@umoteam/viewer'
+// import UmoViewer from '@umoteam/viewer'
 
 import type { WatermarkOption } from '@/types'
 
