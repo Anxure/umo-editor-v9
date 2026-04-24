@@ -147,16 +147,12 @@ export const DocumentSuggest = Extension.create({
             }
         }
         const updateSuggestion = (suggestions: Suggestion[], id: string, info: Record<string, any>) => {
-            const sIndex = suggestions.findIndex((s: Suggestion) => s.id === id);
-            const target = [...suggestions][sIndex];
-            if (sIndex !== -1) {
-                suggestions.splice(sIndex, 1, {
-                    ...target,
-                    ...info,
-                } as Suggestion);
-            }
-            return suggestions;
-        }
+            const sIndex = suggestions.findIndex((s) => s.id === id);
+            if (sIndex === -1) return suggestions;
+            const next = [...suggestions];
+            next[sIndex] = { ...next[sIndex], ...info };
+            return next;
+        };
         return {
             loadSuggestions: () => ({ editor }) => {
                 const isDev = (import.meta as any)?.env?.DEV;
@@ -306,7 +302,7 @@ export const DocumentSuggest = Extension.create({
 
                 // 没有可执行的修复命令，只高亮 & 标记为已处理
                 if (!action) {
-                    updateSuggestion(storage.suggestions, id, { handleStatus: 'accepted' });
+                    storage.suggestions = updateSuggestion(storage.suggestions, id, { handleStatus: 'accepted' });
                     // 显式触发一次基于 storage 的 DecorationSet 重建（因为文档本身并未发生变化）
                     const tr = editor.state.tr.setMeta(documentSuggestPluginKey, {
                         type: 'rebuildFromStorage',
@@ -355,7 +351,7 @@ export const DocumentSuggest = Extension.create({
                     }
                 });
 
-                updateSuggestion(storage.suggestions, id, { handleStatus: 'accepted' });
+                storage.suggestions = updateSuggestion(storage.suggestions, id, { handleStatus: 'accepted' });
                 // 触发一次插件 state 重建 DecorationSet
                 const tr = editor.state.tr.setMeta(documentSuggestPluginKey, {
                     type: 'rebuildFromStorage',
@@ -456,7 +452,7 @@ export const DocumentSuggest = Extension.create({
 
             rejectSuggestion: (id: string) => ({ editor }) => {
                 const storage = this.storage;
-                updateSuggestion(storage.suggestions, id, { handleStatus: 'ignored' });
+                storage.suggestions = updateSuggestion(storage.suggestions, id, { handleStatus: 'ignored' });
                 // 触发一次插件 state 重建 DecorationSet
                 const tr = editor.state.tr.setMeta(documentSuggestPluginKey, {
                     type: 'rebuildFromStorage',
@@ -467,7 +463,7 @@ export const DocumentSuggest = Extension.create({
             },
             confirmSuggestion: (id: string) => ({ editor }) => {
                 const storage = this.storage;
-                updateSuggestion(storage.suggestions, id, { handleStatus: 'confirmed' });
+                storage.suggestions = updateSuggestion(storage.suggestions, id, { handleStatus: 'confirmed' });
                 // 触发一次插件 state 重建 DecorationSet
                 const tr = editor.state.tr.setMeta(documentSuggestPluginKey, {
                     type: 'rebuildFromStorage',

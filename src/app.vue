@@ -681,7 +681,7 @@ const testOptions = $ref({
         const result = [
           {
             "id": "leaderAuditDetection",
-            "message": "待检测文本的主标题为'新闻媒体报道'，而审批件文本的主标题为'每日经济第7569期审核报告'",
+            "message": "审批件标题跟源文件主题吻合，无明显错误。",
             "ruleId": null,
             "appearTimes": null,
             "errorWord": null,
@@ -690,16 +690,21 @@ const testOptions = $ref({
             "fixCommand": null,
             "meta": null,
             "text": null,
+            "isError": false,
             "originalHitText": "",
-            "btns": [
-              "confirmed"
-            ],
+            "btns": [],
             "notNeedFix": true,
-            "handleStatus": "todo"
+            "handleStatus": "todo",
+            "file": {
+              "id": "687",
+              "name": "稿件1审批.png",
+              "size": "223351",
+              "type": "png"
+            }
           },
           {
-            "id": "validScopeMsgMap",
-            "message": "当前正文需为宋体\n当前正文字号需为小四",
+            "id": "odmkt2uqamo",
+            "message": "内容未涉及会议精神或会议/培训相关要求",
             "ruleId": null,
             "appearTimes": null,
             "errorWord": null,
@@ -708,6 +713,8 @@ const testOptions = $ref({
             "fixCommand": null,
             "meta": null,
             "text": null,
+            "isError": true,
+            "oldId": "validScopeMsgMap",
             "originalHitText": "",
             "notNeedFix": true,
             "btns": [
@@ -717,151 +724,77 @@ const testOptions = $ref({
             "handleStatus": "todo"
           },
           {
-            "id": "20dzisbf41m",
-            "message": "错别字：'本几构公关传媒部' 应为 '本机构公关传媒部'",
-            "ruleId": "9",
-            "appearTimes": "1",
-            "errorWord": "本几构公关传媒部",
-            "originalTextPos": {
-              "from": 47,
-              "to": 98
-            },
-            "severity": "warning",
-            "fixCommand": {
-              "action": "replaceText",
-              "params": {
-                "text": "本机构公关传媒部"
-              }
-            },
-            "meta": {
-              "section": "新闻媒体对研究简报的引用应该获得本几构公关传媒部的许可，但"
-            },
-            "text": "不损害本研究机构的知识产权和商业利益为前提。新闻媒体对研究简报的引用应该获得本几构公关传媒部的许可，但",
-            "originalHitText": "本几构公关传媒部",
-            "notNeedFix": false,
-            "btns": [
-              "accepted",
-              "ignored"
-            ],
-            "textPos": {
-              "from": 85,
-              "to": 93
-            },
-            "handleStatus": "todo"
-          },
-          {
-            "id": "8b5fuqafv3s",
-            "message": "错别字：'究简报的观点不得对本研进行有悖原意的引用和修改。' 应为 '研究简报的观点不得对本研究进行有悖原意的引用和修改。'",
-            "ruleId": "9",
-            "appearTimes": "1",
-            "errorWord": "究简报的观点不得对本研进行有悖原意的引用和修改。",
-            "originalTextPos": {
-              "from": 98,
-              "to": 122
-            },
-            "severity": "warning",
-            "fixCommand": {
-              "action": "replaceText",
-              "params": {
-                "text": "研究简报的观点不得对本研究进行有悖原意的引用和修改。"
-              }
-            },
-            "meta": {
-              "section": "究简报的观点不得对本研进行有悖原意的引用和修改。"
-            },
-            "text": "究简报的观点不得对本研进行有悖原意的引用和修改。",
-            "originalHitText": "究简报的观点不得对本研进行有悖原意的引用和修改。",
-            "notNeedFix": false,
-            "btns": [
-              "accepted",
-              "ignored"
-            ],
-            "textPos": {
-              "from": 98,
-              "to": 122
-            },
-            "handleStatus": "todo"
-          },
-          {
-            "id": "m7g2yhr47cw",
-            "message": "错别字：'我是一段有错别字的文字' 应为 '我是一段有正确字的文字'",
-            "ruleId": "9",
-            "appearTimes": "1",
-            "errorWord": "我是一段有错别字的文字",
-            "originalTextPos": {
-              "from": 149,
-              "to": 160
-            },
-            "severity": "warning",
-            "fixCommand": {
-              "action": "replaceText",
-              "params": {
-                "text": "我是一段有正确字的文字"
-              }
-            },
-            "meta": {
-              "section": "我是一段有错别字的文字"
-            },
-            "text": "我是一段有错别字的文字",
-            "originalHitText": "我是一段有错别字的文字",
-            "notNeedFix": false,
-            "btns": [
-              "accepted",
-              "ignored"
-            ],
-            "textPos": {
-              "from": 149,
-              "to": 160
-            },
-            "handleStatus": "todo"
-          },
-          {
-            "id": "qnuel6js3sw",
-            "message": "存在敏感词：进行",
-            "ruleId": "4",
-            "appearTimes": "1",
-            "errorWord": "进行",
-            "originalTextPos": {
-              "from": 98,
-              "to": 122
-            },
+            "id": "6kfgq2jazpw",
+            "message": "未出现'会议指出/强调/要求'等表述",
+            "ruleId": null,
+            "appearTimes": null,
+            "errorWord": null,
+            "originalTextPos": null,
             "severity": "warning",
             "fixCommand": null,
             "meta": null,
-            "text": "究简报的观点不得对本研进行有悖原意的引用和修改。",
-            "originalHitText": "进行",
-            "notNeedFix": false,
+            "text": null,
+            "isError": true,
+            "oldId": "validScopeMsgMap",
+            "originalHitText": "",
+            "notNeedFix": true,
             "btns": [
               "confirmed"
             ],
-            "textPos": {
-              "from": 109,
-              "to": 111
-            },
+            "textPos": {},
             "handleStatus": "todo"
           },
           {
-            "id": "n3qqtow0y80",
-            "message": "存在敏感词：测试",
-            "ruleId": "4",
-            "appearTimes": "1",
-            "errorWord": "测试",
-            "originalTextPos": {
-              "from": 135,
-              "to": 144
-            },
+            "id": "lqphe7s5kcw",
+            "message": "当前正文字号需为小四\n当前正文需为宋体",
+            "ruleId": null,
+            "appearTimes": null,
+            "errorWord": null,
+            "originalTextPos": null,
             "severity": "warning",
             "fixCommand": null,
             "meta": null,
-            "text": "，我是测试文字一段",
-            "originalHitText": "测试",
-            "notNeedFix": false,
+            "text": null,
+            "isError": true,
+            "oldId": "validScopeMsgMap",
+            "originalHitText": "",
+            "notNeedFix": true,
             "btns": [
               "confirmed"
             ],
+            "textPos": {},
+            "handleStatus": "todo"
+          },
+          {
+            "id": "ipt1gcww4ew",
+            "message": "错别字：'针' 应为 '对'",
+            "ruleId": "9",
+            "appearTimes": "1",
+            "errorWord": "针",
+            "originalTextPos": {
+              "from": 171,
+              "to": 172
+            },
+            "severity": "warning",
+            "fixCommand": {
+              "action": "replaceText",
+              "params": {
+                "text": "对"
+              }
+            },
+            "meta": null,
+            "text": "针",
+            "isError": true,
+            "oldId": "9",
+            "originalHitText": "针",
+            "notNeedFix": false,
+            "btns": [
+              "accepted",
+              "ignored"
+            ],
             "textPos": {
-              "from": 138,
-              "to": 140
+              "from": 171,
+              "to": 172
             },
             "handleStatus": "todo"
           }
