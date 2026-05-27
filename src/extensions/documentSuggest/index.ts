@@ -25,6 +25,7 @@ export interface Suggestion {
     text: string;
     originalHitText: string;
     notNeedFix?: boolean; // 是否需要同步修复（某些场景不需要联动）
+    notNeedPoint?: boolean; // 批量类建议无需单点定位/高亮
     btns: string[]; // 按钮数组 accepted/ignored/confirmed 修复/忽略/确认
     /**
      * 后端返回的修复命令定义
@@ -105,6 +106,32 @@ function getSuggestionRange(params: {
         return null;
     }
     return suggestion.textPos || { from: 0, to: 0 };
+}
+
+/** 批量设置正文 textStyle（字体 + 字号），用于信息技术等聚合修复 */
+function applySetBodyTextFormat(params: {
+    chain: () => any;
+    fix: FixCommand;
+}): boolean {
+    const { chain, fix } = params;
+    const fixParams = fix.params || {};
+    const textPosList: TextPosRange[] = Array.isArray(fixParams.textPosList) ? fixParams.textPosList : [];
+    if (!textPosList.length) return false;
+    const fontFamily = fixParams.fontFamily ?? 'SimSun';
+    const fontSize = fixParams.fontSize ?? '12pt';
+
+    let execFlag = true;
+    const sortedRanges = [...textPosList].sort((a, b) => b.from - a.from);
+    for (const pos of sortedRanges) {
+        if (pos.from >= pos.to) continue;
+        execFlag = chain()
+            .focus()
+            .setTextSelection(pos)
+            .setFontFamily(fontFamily)
+            .setFontSize(fontSize)
+            .run() && execFlag;
+    }
+    return execFlag;
 }
 const documentSuggestPluginKey = new PluginKey('documentSuggest');
 
@@ -291,11 +318,6 @@ export const DocumentSuggest = Extension.create({
                     return false;
                 }
 
-                const range = getSuggestionRange({ doc: editor.state.doc, suggestion: target });
-                if (!range) {
-                    return false;
-                }
-
                 const fix = target.fixCommand;
                 const action = fix?.action;
                 const params = fix?.params || {};
@@ -309,6 +331,32 @@ export const DocumentSuggest = Extension.create({
                     });
                     editor.view.dispatch(tr);
                     return true;
+                }
+
+                // 批量修复：不依赖外层 textPos
+                if (action === 'setBodyTextFormat') {
+                    storage.ignoreDirty = true;
+                    let batchExecFlag = true;
+                    withIgnoreDirty(() => {
+                        try {
+                            batchExecFlag = applySetBodyTextFormat({ chain, fix });
+                        } catch (error) {
+                            console.error(error);
+                            batchExecFlag = false;
+                        }
+                    });
+                    storage.suggestions = updateSuggestion(storage.suggestions, id, { handleStatus: 'accepted' });
+                    const batchTr = editor.state.tr.setMeta(documentSuggestPluginKey, {
+                        type: 'rebuildFromStorage',
+                        isChangeSuggestions: true,
+                    });
+                    editor.view.dispatch(batchTr);
+                    return batchExecFlag;
+                }
+
+                const range = getSuggestionRange({ doc: editor.state.doc, suggestion: target });
+                if (!range) {
+                    return false;
                 }
 
                 let execFlag = true;
@@ -369,13 +417,18 @@ export const DocumentSuggest = Extension.create({
                         // 只处理当前仍为 todo 的建议，执行前实时根据 textPos 计算位置
                         const todoList = storage.suggestions.filter((s: Suggestion) => s.handleStatus === 'todo');
                         for (const s of todoList) {
-                            const range = getSuggestionRange({ doc: editor.state.doc, suggestion: s });
-                            if (!range || range.from >= range.to) continue;
-
                             const fix = s.fixCommand;
                             const action = fix?.action;
                             const params = fix?.params || {};
                             if (!action) continue;
+
+                            if (action === 'setBodyTextFormat') {
+                                applySetBodyTextFormat({ chain, fix });
+                                continue;
+                            }
+
+                            const range = getSuggestionRange({ doc: editor.state.doc, suggestion: s });
+                            if (!range || range.from >= range.to) continue;
 
                             switch (action) {
                                 case 'setHeading': {
@@ -529,7 +582,7 @@ export const DocumentSuggest = Extension.create({
         const pluginKey = documentSuggestPluginKey;
         // isChangeSuggestions - 是否修改了意见项（应用/拒绝的场景下，需要主动调用一次外部更新，关闭弹框，主要是处理最后一个关闭意见无法关闭弹框的场景）
         const buildDecorations = (state: EditorState, suggestions: Suggestion[], isChangeSuggestions?: boolean): DecorationSet => {
-            console.log(suggestions, 'suggestions');
+            // console.log(suggestions, 'suggestions');
             const todoSuggestions = suggestions.filter((s) => s.handleStatus == 'todo');
             const { doc, selection } = state as any;
             if (!todoSuggestions || todoSuggestions.length === 0) {
@@ -634,7 +687,7 @@ export const DocumentSuggest = Extension.create({
                             const mapping = tr.mapping;
                             // 映射所有待显示的建议坐标
                             newSuggestions = this.storage.suggestions.map(s => {
-                                if (s.handleStatus !== 'todo' || s.textPos === undefined || s.notNeedFix) {
+                                if (s.handleStatus !== 'todo' || !s.textPos || s.notNeedFix || s.notNeedPoint) {
                                     return s;
                                 }
 

@@ -56,7 +56,7 @@
     "build:full": "vue-tsc --noEmit && vite build --config vite.config.full.ts",
     "build:full-tj": "bash ./scripts/build-full-tj.sh",
     "dev": "vite --port 9000 --open --force",
-    "dev:ykx": "vite --mode ykx --port 9000 --open --force",
+    "dev:ykx": "vite --mode ykx --port 9001 --open --force",
     "format": "prettier --write .",
     "check:code": "eslint --cache src",
     "check:style": "stylelint src/**/*.{css,less,vue}",
@@ -215,5 +215,6 @@
     "*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,vue}": [
       "eslint --fix src"
     ]
-  }
+  },
+  "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c914e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c"
 }
