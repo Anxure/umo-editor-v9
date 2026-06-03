@@ -188,37 +188,26 @@ export const DocumentSuggest = Extension.create({
                 storage.textDirty = false;
                 storage.isLoading = true;
                 storage.error = null;
-                const findNearestTextblock = (doc: any, pos: number) => {
-                    const $pos = doc.resolve(pos);
-                    for (let d = $pos.depth; d >= 0; d--) {
-                        const n = $pos.node(d);
-                        if (n?.isTextblock) {
-                            const nodePos = d === 0 ? 0 : $pos.before(d); // textblock 节点起点（绝对 pos）
-                            const contentStartPos = $pos.start(d); // textblock 内容起点（绝对 pos）
-                            return {
-                                node: n,
-                                depth: d,
-                                nodePos,
-                                contentStartPos,
-                            };
-                        }
-                    }
-                    return null;
-                };
                 // const docJson = editor.getJSON();
                 // console.log('docJson', docJson);
                 // console.log('docHtml', editor.getHTML());
                 /**
                  * 生成给大模型/后端检测用的结构：
-                 * - 扁平化：每个 text span 一条记录（避免 blocks->inlines 的嵌套）
+                 * - 按 textblock（paragraph/heading 等）收敛：一段一条完整文本，避免 mark 差异导致语义割裂
                  * - originalTextPos 使用 ProseMirror 绝对坐标（从文档根起点开始计数）
-                 * - attrs：取最近的 textblock（heading/paragraph 等）节点 attrs，并合并 text marks 样式（驼峰 key）
+                 * - attrs：textblock 节点 attrs；inlineSpans 保留段落内按 mark 拆分的样式片段（供格式校验）
                  */
-                type DocTextSpan = {
-                    type: 'text';
+                type DocInlineSpan = {
                     text: string;
                     originalTextPos: { from: number; to: number };
                     attrs: Record<string, any>;
+                };
+                type DocTextSpan = {
+                    type: string;
+                    text: string;
+                    originalTextPos: { from: number; to: number };
+                    attrs: Record<string, any>;
+                    inlineSpans?: DocInlineSpan[];
                 };
                 const docJson: DocTextSpan[] = [];
                 const marksToStyleAttrs = (marks: any[] | null | undefined) => {
@@ -240,25 +229,37 @@ export const DocumentSuggest = Extension.create({
                     return styleAttrs;
                 };
                 editor.state.doc.descendants((node: any, pos: number) => {
-                    if (!node?.isText || !node.text) return;
+                    if (!node?.isTextblock) return;
 
-                    const info = findNearestTextblock(editor.state.doc, pos);
-                    if (!info) return;
+                    const text = node.textContent;
+                    if (!text) return;
 
-                    // ProseMirror 绝对坐标：pos 是 text node 的起点
-                    // text node 的实际内容范围通常是 [pos, pos + text.length]
-                    // 这里用 length 更贴合“文本范围”，也更适合 textBetween 校验
-                    const from = pos;
-                    const to = pos + node.text.length;
-                    const styleAttrs = marksToStyleAttrs(node.marks);
+                    const contentStartPos = pos + 1;
+                    const contentEndPos = contentStartPos + node.content.size;
+                    const blockAttrs = node.attrs || {};
+                    const inlineSpans: DocInlineSpan[] = [];
+
+                    node.forEach((child: any, offset: number) => {
+                        if (!child?.isText || !child.text) return;
+
+                        const from = contentStartPos + offset;
+                        const to = from + child.text.length;
+                        inlineSpans.push({
+                            text: child.text,
+                            originalTextPos: { from, to },
+                            attrs: {
+                                ...blockAttrs,
+                                ...marksToStyleAttrs(child.marks),
+                            },
+                        });
+                    });
+
                     docJson.push({
-                        type: info.node.type.name === 'paragraph' ? 'text' : info.node.type.name,
-                        text: node.text,
-                        originalTextPos: { from, to },
-                        attrs: {
-                            ...(info.node.attrs || {}),
-                            ...styleAttrs,
-                        },
+                        type: node.type.name === 'paragraph' ? 'text' : node.type.name,
+                        text,
+                        originalTextPos: { from: contentStartPos, to: contentEndPos },
+                        attrs: blockAttrs,
+                        inlineSpans: inlineSpans.length > 1 ? inlineSpans : undefined,
                     });
                 });
                 console.log(docJson, 'docJson');
