@@ -466,6 +466,10 @@ export const DocumentSuggest = Extension.create({
                     if (s.notNeedFix) {
                         return s;
                     }
+                    // 不处理确认的项
+                    if (s.btns.includes('confirmed')) {
+                        return s;
+                    }
                     return {
                         ...s,
                         handleStatus: 'accepted',
