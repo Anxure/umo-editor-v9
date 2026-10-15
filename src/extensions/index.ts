@@ -27,6 +27,7 @@ import { TableOfContents } from '@tiptap-pro/extension-table-of-contents'
 import { Decoration } from "@tiptap/pm/view";
 import { NodeId } from './nodeId'
 import { DocumentSuggest, type Suggestion as DocumentSuggestion } from './documentSuggest'
+import { DocumentCompare } from './documentCompare'
 import type { UmoEditorOptions } from '@/types'
 import { getImageDimensions } from '@/utils/file'
 import { shortId } from '@/utils/short-id'
@@ -305,6 +306,9 @@ export const getDefaultExtensions = ({
         return decorations;
       },
       onSuggestionClick: options.value.documentSuggestConfig?.onSuggestionClick,
+    }),
+    DocumentCompare.configure({
+      autoReadOnly: options.value.documentCompareConfig?.autoReadOnly ?? true,
     }),
   ]
 

@@ -15,7 +15,7 @@
                     <t-tooltip
                       :attach="popupAttach"
                       trigger="hover"
-                      placement="left"
+                      placement="right"
                       :disabled="!suggestion?.message"
                     >
                       <div

@@ -271,6 +271,10 @@ export interface UmoEditorOptions {
     }) => Decoration[]
     onSuggestionClick?: (suggestion: Suggestion) => void;
   },
+  /** 文档版本对比扩展 */
+  documentCompareConfig?: null | {
+    autoReadOnly?: boolean
+  },
   echarts?: EchartsOptions
   webPages?: WebPageItem[]
   templates?: Template[]

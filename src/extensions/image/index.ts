@@ -3,6 +3,65 @@ import Image from '@tiptap/extension-image'
 import { type CommandProps, VueNodeViewRenderer } from '@tiptap/vue-3'
 
 import NodeView from './node-view.vue'
+
+const standardImageAttributes = ['src', 'alt', 'title', 'width', 'height']
+const editorImageAttributes = [
+  'vnode',
+  'type',
+  'name',
+  'size',
+  'id',
+  'content',
+  'left',
+  'top',
+  'angle',
+  'draggable',
+  'rotatable',
+  'equalProportion',
+  'flipX',
+  'flipY',
+  'uploaded',
+  'error',
+  'previewType',
+  'inline',
+]
+const booleanImageAttributes = new Set([
+  'vnode',
+  'draggable',
+  'rotatable',
+  'equalProportion',
+  'flipX',
+  'flipY',
+  'uploaded',
+  'error',
+  'inline',
+])
+const toKebabCase = (value: string) => value.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)
+const dataAttributeName = (name: string) => `data-umo-${toKebabCase(name)}`
+
+// 新 HTML 以 data-umo-* 保存编辑器元数据，后端/第三方 HTML 解析器可忽略它们。
+// 同时保留裸属性读取，确保历史内容重新载入时不丢失图片的编辑状态。
+const parseImageAttributes = (node: HTMLElement) => {
+  const attributes: Record<string, string | boolean> = {}
+  for (const name of [...standardImageAttributes, ...editorImageAttributes]) {
+    const value = node.getAttribute(dataAttributeName(name)) ?? node.getAttribute(name)
+    if (value === null) continue
+    attributes[name] = booleanImageAttributes.has(name) ? value === 'true' : value
+  }
+  return attributes
+}
+
+const renderImageAttributes = (attributes: Record<string, unknown>) => {
+  const htmlAttributes: Record<string, unknown> = {}
+  for (const name of standardImageAttributes) {
+    if (attributes[name] !== null && attributes[name] !== undefined) htmlAttributes[name] = attributes[name]
+  }
+  for (const name of editorImageAttributes) {
+    if (attributes[name] !== null && attributes[name] !== undefined) htmlAttributes[dataAttributeName(name)] = String(attributes[name])
+  }
+  return htmlAttributes
+}
+
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     setImage: {
@@ -83,7 +142,10 @@ const baseImageExtend = Image.extend({
     }
   },
   parseHTML() {
-    return [{ tag: 'img' }]
+    return [{ tag: 'img', getAttrs: (node) => parseImageAttributes(node as HTMLElement) }]
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['img', mergeAttributes(renderImageAttributes(HTMLAttributes))]
   },
   addPasteRules() {
     return [
@@ -167,10 +229,10 @@ export const InlineImage = baseImageExtend.extend({
     }
   },
   parseHTML() {
-    return [{ tag: 'inline-img' }]
+    return [{ tag: 'inline-img', getAttrs: (node) => parseImageAttributes(node as HTMLElement) }]
   },
   renderHTML({ HTMLAttributes }) {
-    return ['inline-img', mergeAttributes(HTMLAttributes)]
+    return ['inline-img', mergeAttributes(renderImageAttributes(HTMLAttributes))]
   },
   addNodeView() {
     return VueNodeViewRenderer(NodeView)

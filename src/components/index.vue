@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import type { FocusPosition, JSONContent } from '@tiptap/core'
+import { generateJSON, type FocusPosition, type JSONContent } from '@tiptap/core'
 import type { Editor } from '@tiptap/vue-3'
 import {
   isBoolean,
@@ -862,6 +862,16 @@ const getImage = async (format: 'blob' | 'jpeg' | 'png' = 'blob') => {
 const getText = () => getContent('text')
 const getHTML = () => getContent('html')
 const getJSON = () => getContent('json')
+/** 用当前编辑器同一套 schema/extensions 把 HTML 转成 JSON，不改动当前文档 */
+const htmlToJSON = (html: string): JSONContent => {
+  if (!editor.value) {
+    throw new Error('editor is not ready!')
+  }
+  return generateJSON(
+    html || '<p></p>',
+    editor.value.extensionManager.extensions,
+  ) as JSONContent
+}
 const getVanillaHTML = async () => {
   if (!editor.value) {
     throw new Error('editor is not ready!')
@@ -1209,6 +1219,7 @@ defineExpose({
   getText,
   getHTML,
   getJSON,
+  htmlToJSON,
   getVanillaHTML,
   saveContent,
   getContentExcerpt,

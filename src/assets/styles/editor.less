@@ -310,7 +310,7 @@
       page-break-inside: avoid;
       page-break-after: auto;
     }
-
+    // 增加textalign的优先级（后端会在ai生成的时候塞style进去）
     // thead {
     //   display: table-header-group;
     // }
@@ -329,62 +329,62 @@
 
       &[align='left-top'] {
         vertical-align: top;
-        text-align: left;
+        text-align: left !important;
       }
 
       &[align='center-top'] {
         vertical-align: top;
-        text-align: center;
+        text-align: center !important;
       }
 
       &[align='right-top'] {
         vertical-align: middle;
-        text-align: right;
+        text-align: right !important;
       }
 
       &[align='justify-top'] {
         vertical-align: middle;
-        text-align: justify;
+        text-align: justify !important;
       }
 
       &[align='left-middle'] {
         vertical-align: middle;
-        text-align: left;
+        text-align: left !important;
       }
 
       &[align='center-middle'] {
         vertical-align: middle;
-        text-align: center;
+        text-align: center !important;
       }
 
       &[align='right-middle'] {
         vertical-align: middle;
-        text-align: right;
+        text-align: right !important;
       }
 
       &[align='justify-middle'] {
         vertical-align: middle;
-        text-align: justify;
+        text-align: justify !important;
       }
 
       &[align='left-bottom'] {
         vertical-align: bottom;
-        text-align: left;
+        text-align: left !important;
       }
 
       &[align='center-bottom'] {
         vertical-align: middle;
-        text-align: center;
+        text-align: center !important;
       }
 
       &[align='right-bottom'] {
         vertical-align: bottom;
-        text-align: right;
+        text-align: right !important;
       }
 
       &[align='justify-bottom'] {
         vertical-align: bottom;
-        text-align: justify;
+        text-align: justify !important;
       }
     }
 
@@ -738,4 +738,22 @@
       font-size: 0.85em;
     }
   }
+}
+
+/* 文档版本对比高亮 */
+.umo-diff-insert,
+[data-diff-type='inline-insert'] {
+  background-color: rgba(34, 197, 94, 0.28);
+  border-radius: 2px;
+}
+
+.umo-diff-delete,
+[data-diff-type='inline-delete'] {
+  background-color: rgba(239, 68, 68, 0.22);
+  color: #b91c1c;
+  text-decoration: line-through;
+  border-radius: 2px;
+  padding: 0 1px;
+  margin: 0 1px;
+  user-select: none;
 }

@@ -50,7 +50,11 @@ const buildConfig: import('vite').BuildOptions = {
      */
     formats: ['es'],
   } as import('vite').LibraryOptions,
-  outDir: process.env.BUILD_TARGET === 'tj' ? '/Volumes/ykxDrive/work/tj-platform-web/packages/app-main/src/editor' : 'dist',
+  outDir: process.env.BUILD_TARGET === 'tj-no-luckysheet'
+    ? '/Volumes/ykxDrive/work/work-temp/tj-no-luckysheet/packages/app-main/src/editor'
+    : process.env.BUILD_TARGET === 'tj'
+      ? '/Volumes/ykxDrive/work/tj-platform-web/packages/app-main/src/editor'
+      : 'dist',
   copyPublicDir: false,
   minify: 'esbuild' as const,
   cssMinify: true,

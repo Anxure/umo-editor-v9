@@ -14,6 +14,13 @@
             <button @click="handleApplyAllSuggestions">应用所有</button>
             <button @click="handleRejectAllSuggestions">拒绝所有</button>
           </div>
+          <div style="margin-top: 12px; border-top: 1px solid #eee; padding-top: 10px;">
+            <div style="font-size: 12px; color: #666; margin-bottom: 6px;">版本对比 documentCompare</div>
+            <button @click="handleSaveCompareBase">记录为旧版基准</button>
+            <button @click="handleShowDocumentDiff">与基准对比</button>
+            <button @click="handleHideDocumentDiff">退出对比</button>
+            <div v-if="compareBaseSaved" style="font-size: 12px; color: #16a34a; margin-top: 4px;">已记录旧版基准，改几处文字后再点「与基准对比」</div>
+          </div>
           <ul>
             <li v-for="suggestion in editorSuggestions" :key="suggestion.id">
               <div>
@@ -100,6 +107,29 @@ const handleExportWord = () => {
 const handleFullTextCorrection = () => {
   const editor = editorRef.value?.useEditor?.()
   editor?.chain().loadSuggestions().run()
+}
+
+/** ykx：本地测 documentCompare —— 先存基准 JSON，改稿后再对比 */
+const compareBaseJson = shallowRef<any>(null)
+const compareBaseSaved = computed(() => !!compareBaseJson.value)
+const handleSaveCompareBase = () => {
+  const editor = editorRef.value?.useEditor?.()
+  if (!editor) return
+  compareBaseJson.value = editor.getJSON()
+  console.log('[documentCompare] base saved', compareBaseJson.value)
+}
+const handleShowDocumentDiff = () => {
+  const editor = editorRef.value?.useEditor?.()
+  if (!editor) return
+  if (!compareBaseJson.value) {
+    console.warn('[documentCompare] 请先点「记录为旧版基准」')
+    return
+  }
+  editor.chain().showDocumentDiff({ fromJson: compareBaseJson.value }).run()
+}
+const handleHideDocumentDiff = () => {
+  const editor = editorRef.value?.useEditor?.()
+  editor?.chain().hideDocumentDiff().run()
 }
 
 const options = $ref({

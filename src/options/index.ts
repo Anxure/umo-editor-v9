@@ -93,6 +93,8 @@ const defaultOptions: UmoEditorOptions = {
   ai: defaultAiOptions,
   // 增加纠错扩展配置
   documentSuggestConfig: null,
+  // 文档版本对比
+  documentCompareConfig: null,
   echarts: {
     mode: 1,
     renderImage: false,
@@ -803,6 +805,28 @@ const ojbectSchema = new ObjectSchema({
       ) {
         throw new Error(
           'Key "documentSuggestConfig": Key "onSuggestionClick" must be a function.',
+        )
+      }
+    },
+  },
+  documentCompareConfig: {
+    merge: 'replace',
+    required: false,
+    validate(value: unknown) {
+      if (value === null || value === undefined) {
+        return
+      }
+      if (!isRecord(value)) {
+        throw new Error('Key "documentCompareConfig": must be null or an object.')
+      }
+      if (
+        'autoReadOnly' in value &&
+        value.autoReadOnly !== undefined &&
+        value.autoReadOnly !== null &&
+        typeof value.autoReadOnly !== 'boolean'
+      ) {
+        throw new Error(
+          'Key "documentCompareConfig": Key "autoReadOnly" must be a boolean.',
         )
       }
     },
