@@ -32,6 +32,12 @@
           <template #paragraph_left_menu="props">
             <slot name="paragraph_left_menu" v-bind="props" />
           </template>
+          <template #reference_source="props">
+            <slot name="reference_source" v-bind="props" />
+          </template>
+          <template #reference-source="props">
+            <slot name="reference-source" v-bind="props" />
+          </template>
         </container-page>
       </main>
       <footer class="umo-footer">
@@ -121,6 +127,10 @@ const emits = defineEmits([
   'customSaveContent',
   'exportWord',
   'handleFullTextCorrection',
+  'referenceClick',
+  'reference-click',
+  'referenceSourceClick',
+  'reference-source-click',
 ])
 // 撤销重做的记录步骤
 const historyRecords = ref({
@@ -173,6 +183,13 @@ provide('handleFullTextCorrection', () => {
   // console.log('handleFullTextCorrection')
   emits('handleFullTextCorrection')
 })
+const handleReferenceClick = (event: MouseEvent) => {
+  emits('referenceClick', event)
+  emits('reference-click', event)
+  emits('referenceSourceClick', event)
+  emits('reference-source-click', event)
+}
+provide('handleReferenceClick', handleReferenceClick)
 
 watch(
   () => options.value.page,
@@ -186,6 +203,7 @@ watch(
     showBookmark,
     showLineNumber,
     showToc,
+    showReferenceSource,
   }: PageOption) => {
     page.value = {
       layout: layouts[0],
@@ -200,6 +218,7 @@ watch(
       showBookmark,
       showLineNumber,
       showToc,
+      showReferenceSource,
       zoomLevel: 100,
       autoWidth: false,
       preview: {

@@ -47,6 +47,7 @@ export interface PageOption {
   footer?: boolean
   showLineNumber?: boolean
   showToc?: boolean
+  showReferenceSource?: boolean
   zoomLevel?: number
   bodyHeight?: number
   autoWidth?: boolean
@@ -275,6 +276,21 @@ export interface UmoEditorOptions {
   documentCompareConfig?: null | {
     autoReadOnly?: boolean
   },
+  /** 是否在内容区域右下方展示引用源浮动图标 */
+  showReferenceSource?: boolean
+  /** 引用源浮动图标配置 */
+  referenceSource?:
+    | boolean
+    | number
+    | {
+        show?: boolean
+        visible?: boolean
+        count?: number | string
+        text?: string
+        tooltip?: string
+        gap?: number
+      }
+    | null
   echarts?: EchartsOptions
   webPages?: WebPageItem[]
   templates?: Template[]

@@ -38,12 +38,15 @@
           <button @click="handleGetTextDirty">获取正文是否变动字段</button>
         </div>
       </div>
-      <umo-editor v-else ref="editorRef" v-bind="options" @exportWord="handleExportWord"
+      <umo-editor v-else ref="editorRef" v-bind="options" :show-reference-source="showReferenceSourceDemo" :reference-source="{ count: 8, tooltip: '引用8篇资料作为参考' }" @referenceClick="handleReferenceClick" @exportWord="handleExportWord"
         @customSaveContent="handleCustomSaveContent">
         <template #paragraph_left_menu="props">
           <!-- <umo-menu-button>1111</umo-menu-button> -->
         </template>
         <template #extended-actions>
+          <t-button size="small" variant="text" @click="showReferenceSourceDemo = !showReferenceSourceDemo">
+            {{ showReferenceSourceDemo ? '隐藏引用源' : '显示引用源' }}
+          </t-button>
           <t-button size="small" variant="text" @click="handleOpenImportHtmlDialog">
             导入HTML测试
           </t-button>
@@ -67,8 +70,14 @@
 </template>
 
 <script setup lang="ts">
+import { MessagePlugin } from 'tdesign-vue-next'
 import { shortId } from '@/utils/short-id'
 import { useEditorStorage } from '@/hooks/useEditorStrorage'
+
+const showReferenceSourceDemo = ref(true)
+const handleReferenceClick = () => {
+  MessagePlugin.success('点击了引用源浮动图标！')
+}
 
 const editorRef = useTemplateRef('editorRef')
 const isYkxDev = import.meta.env.MODE === 'ykx'

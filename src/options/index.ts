@@ -54,6 +54,7 @@ const defaultOptions: UmoEditorOptions = {
     showLineNumber: false,
     showBookmark: false,
     showToc: false,
+    showReferenceSource: false,
     watermark: {
       type: 'compact',
       alpha: 0.2,
@@ -95,6 +96,9 @@ const defaultOptions: UmoEditorOptions = {
   documentSuggestConfig: null,
   // 文档版本对比
   documentCompareConfig: null,
+  // 引用源展示配置
+  showReferenceSource: false,
+  referenceSource: null,
   echarts: {
     mode: 1,
     renderImage: false,
@@ -488,6 +492,11 @@ const ojbectSchema = new ObjectSchema({
         validate: 'boolean',
         required: false,
       },
+      showReferenceSource: {
+        merge: 'replace',
+        validate: 'boolean',
+        required: false,
+      },
       watermark: {
         required: false,
         merge: 'replace',
@@ -827,6 +836,30 @@ const ojbectSchema = new ObjectSchema({
       ) {
         throw new Error(
           'Key "documentCompareConfig": Key "autoReadOnly" must be a boolean.',
+        )
+      }
+    },
+  },
+  showReferenceSource: {
+    merge: 'replace',
+    validate: 'boolean',
+    required: false,
+  },
+  referenceSource: {
+    merge: 'replace',
+    required: false,
+    validate(value: unknown) {
+      if (
+        value === null ||
+        value === undefined ||
+        typeof value === 'boolean' ||
+        typeof value === 'number'
+      ) {
+        return
+      }
+      if (!isRecord(value)) {
+        throw new Error(
+          'Key "referenceSource": must be boolean, number, null or an object.',
         )
       }
     },

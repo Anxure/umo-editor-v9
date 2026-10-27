@@ -48,7 +48,41 @@
       </div>
     </div>
     <t-image-viewer v-model:visible="imageViewer.visible" v-model:index="currentImageIndex" :images="previewImages" @close="imageViewer.visible = false" />
-    <t-back-top :container="`${container} .umo-zoomable-container`" :visible-height="800" size="small" :offset="['25px', '30px']" />
+    <!-- 引用源浮动按钮 -->
+    <transition name="umo-fade">
+      <div
+        v-if="showRefSource"
+        class="umo-reference-source-float"
+        :style="refSourceStyle"
+        @click="handleRefSourceClick"
+      >
+        <slot name="reference_source" :config="refSourceConfig">
+          <slot name="reference-source" :config="refSourceConfig">
+            <t-tooltip
+              :content="refSourceConfig.tooltip"
+              placement="top"
+            >
+              <div class="umo-reference-source-pill">
+                <div class="umo-source-icons">
+                  <div class="umo-source-circle circle-1">
+                    <svg viewBox="0 0 24 24" width="8" height="8" fill="none" stroke="#2ba245" stroke-width="3" stroke-linecap="round"><path d="M6 4v7a6 6 0 0 0 12 0V4"/></svg>
+                  </div>
+                  <div class="umo-source-circle circle-2">
+                    <svg viewBox="0 0 24 24" width="8" height="8" fill="#ffffff"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                  </div>
+                  <div class="umo-source-circle circle-3">
+                    <svg viewBox="0 0 24 24" width="8" height="8" fill="#2ba245"><circle cx="4" cy="4" r="2.5"/><circle cx="12" cy="4" r="2.5"/><circle cx="20" cy="4" r="2.5"/><circle cx="4" cy="12" r="2.5"/><circle cx="12" cy="12" r="2.5"/><circle cx="20" cy="12" r="2.5"/><circle cx="4" cy="20" r="2.5"/><circle cx="12" cy="20" r="2.5"/><circle cx="20" cy="20" r="2.5"/></svg>
+                  </div>
+                </div>
+                <span class="umo-source-text">{{ refSourceConfig.text }}</span>
+                <span v-if="refSourceConfig.count !== undefined && refSourceConfig.count !== null && refSourceConfig.count !== ''" class="umo-source-count">{{ refSourceConfig.count }}</span>
+              </div>
+            </t-tooltip>
+          </slot>
+        </slot>
+      </div>
+    </transition>
+    <t-back-top :container="`${container} .umo-zoomable-container`" :visible-height="800" size="small" :offset="showRefSource && pageOptions.layout === 'web' ? ['70px', '28px'] : ['25px', '30px']" />
     <container-search-replace />
     <container-print />
   </div>
@@ -62,6 +96,7 @@
 
 <script setup lang="ts">
 // import UmoViewer from '@umoteam/viewer'
+import { isRecord } from '@tool-belt/type-predicates'
 
 import type { WatermarkOption } from '@/types'
 
@@ -197,6 +232,189 @@ watch(viewer, async (visible: boolean) => {
   viewerOptions.html = visible ? await getVanillaHTML() : ''
   viewerVisible = visible
 })
+
+// 引用源浮动按钮逻辑
+const onReferenceClick = inject<((e: MouseEvent) => void) | undefined>(
+  'handleReferenceClick',
+  undefined,
+)
+
+const showRefSource = computed(() => {
+  if (options.value.showReferenceSource) return true
+  if (pageOptions.value?.showReferenceSource) return true
+  if (options.value.referenceSource === true) return true
+  if (
+    typeof options.value.referenceSource === 'number' &&
+    options.value.referenceSource > 0
+  ) {
+    return true
+  }
+  if (isRecord(options.value.referenceSource)) {
+    return Boolean(
+      options.value.referenceSource.show ??
+        options.value.referenceSource.visible ??
+        true,
+    )
+  }
+  return false
+})
+
+const refSourceConfig = computed(() => {
+  const rs = options.value.referenceSource
+  if (typeof rs === 'number') {
+    return {
+      count: rs,
+      text: '源',
+      tooltip: `引用${rs}篇资料作为参考`,
+    }
+  }
+  if (isRecord(rs)) {
+    const count = rs.count
+    return {
+      count,
+      text: rs.text ?? '源',
+      tooltip:
+        rs.tooltip ??
+        (count !== undefined && count !== null && count !== ''
+          ? `引用${count}篇资料作为参考`
+          : '查看引用源'),
+    }
+  }
+  return {
+    count: undefined,
+    text: '源',
+    tooltip: '查看引用源',
+  }
+})
+
+const handleRefSourceClick = (event: MouseEvent) => {
+  onReferenceClick?.(event)
+}
+
+const refSourceStyle = ref<Record<string, string>>({})
+
+const updateRefSourcePosition = () => {
+  if (!showRefSource.value) return
+  if (pageOptions.value?.layout === 'web') {
+    refSourceStyle.value = {
+      right: '28px',
+      bottom: '25px',
+      left: 'auto',
+    }
+    return
+  }
+
+  const mainEl = document.querySelector<HTMLElement>(
+    `${container} .umo-main-container`,
+  )
+  const contentEl = document.querySelector<HTMLElement>(
+    `${container} .umo-zoomable-content`,
+  )
+
+  if (!mainEl || !contentEl) {
+    refSourceStyle.value = {
+      right: '28px',
+      bottom: '25px',
+      left: 'auto',
+    }
+    return
+  }
+
+  const mainRect = mainEl.getBoundingClientRect()
+  const contentRect = contentEl.getBoundingClientRect()
+
+  // 引用源按钮配置的间距，默认放在页面右侧边缘外侧 14px
+  const rs = options.value.referenceSource
+  const gap = isRecord(rs) && typeof rs.gap === 'number' ? rs.gap : 14
+
+  const floatEl = document.querySelector<HTMLElement>(
+    `${container} .umo-reference-source-float`,
+  )
+  const buttonWidth = floatEl?.offsetWidth || 85
+
+  // 计算相对于 mainContainer 的 left 坐标
+  let targetLeft = contentRect.right - mainRect.left + gap
+
+  // 边界保护：若右侧空间不足则贴在容器视口右侧
+  const maxLeft = mainRect.width - buttonWidth - 16
+  const minLeft = 16
+
+  if (targetLeft > maxLeft) {
+    targetLeft = Math.max(minLeft, maxLeft)
+  }
+
+  refSourceStyle.value = {
+    left: `${Math.round(targetLeft)}px`,
+    bottom: '25px',
+    right: 'auto',
+  }
+}
+
+let refSourceResizeObserver: ResizeObserver | null = null
+let refSourceRaf: number | null = null
+
+const queueUpdateRefSourcePosition = () => {
+  if (refSourceRaf !== null) cancelAnimationFrame(refSourceRaf)
+  refSourceRaf = requestAnimationFrame(() => {
+    updateRefSourcePosition()
+    refSourceRaf = null
+  })
+}
+
+onMounted(() => {
+  window.addEventListener('resize', queueUpdateRefSourcePosition)
+  const zoomableEl = document.querySelector<HTMLElement>(
+    `${container} .umo-zoomable-container`,
+  )
+  zoomableEl?.addEventListener('scroll', queueUpdateRefSourcePosition, {
+    passive: true,
+  })
+
+  const mainEl = document.querySelector<HTMLElement>(
+    `${container} .umo-main-container`,
+  )
+  const contentEl = document.querySelector<HTMLElement>(
+    `${container} .umo-zoomable-content`,
+  )
+  if (typeof ResizeObserver !== 'undefined') {
+    refSourceResizeObserver = new ResizeObserver(() => {
+      queueUpdateRefSourcePosition()
+    })
+    if (mainEl) refSourceResizeObserver.observe(mainEl)
+    if (contentEl) refSourceResizeObserver.observe(contentEl)
+  }
+
+  void nextTick(() => {
+    updateRefSourcePosition()
+  })
+})
+
+onUnmounted(() => {
+  if (refSourceRaf !== null) cancelAnimationFrame(refSourceRaf)
+  window.removeEventListener('resize', queueUpdateRefSourcePosition)
+  const zoomableEl = document.querySelector<HTMLElement>(
+    `${container} .umo-zoomable-container`,
+  )
+  zoomableEl?.removeEventListener('scroll', queueUpdateRefSourcePosition)
+  refSourceResizeObserver?.disconnect()
+})
+
+watch(
+  () => [
+    showRefSource.value,
+    pageOptions.value?.layout,
+    pageOptions.value?.zoomLevel,
+    pageOptions.value?.size,
+    pageOptions.value?.orientation,
+    pageOptions.value?.showToc,
+  ],
+  () => {
+    void nextTick(() => {
+      updateRefSourcePosition()
+    })
+  },
+  { deep: true },
+)
 </script>
 
 <style lang="less">
@@ -367,6 +585,103 @@ watch(viewer, async (visible: boolean) => {
     justify-content: center;
     align-items: center;
     z-index: 1001;
+  }
+}
+
+.umo-reference-source-float {
+  position: absolute;
+  right: 28px;
+  bottom: 25px;
+  z-index: 50;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+
+  &.umo-fade-enter-active,
+  &.umo-fade-leave-active {
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+
+  &.umo-fade-enter-from,
+  &.umo-fade-leave-to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.95);
+  }
+
+  .umo-reference-source-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 30px;
+    padding: 0 10px 0 6px;
+    background: var(--umo-color-white);
+    border: 1px solid var(--umo-border-color-dark);
+    border-radius: 9999px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      background: var(--umo-button-hover-background);
+      border-color: #cbd5e1;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  .umo-source-icons {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .umo-source-circle {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 1.5px var(--umo-color-white);
+    flex-shrink: 0;
+
+    &.circle-1 {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      z-index: 3;
+    }
+
+    &.circle-2 {
+      background: #00a870;
+      margin-left: -5px;
+      z-index: 2;
+    }
+
+    &.circle-3 {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      margin-left: -5px;
+      z-index: 1;
+    }
+  }
+
+  .umo-source-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--umo-text-color);
+    line-height: 1;
+    margin-left: 2px;
+  }
+
+  .umo-source-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--umo-primary-color);
+    line-height: 1;
+    margin-left: 1px;
   }
 }
 </style>
