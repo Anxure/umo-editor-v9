@@ -128,9 +128,6 @@ const emits = defineEmits([
   'exportWord',
   'handleFullTextCorrection',
   'referenceClick',
-  'reference-click',
-  'referenceSourceClick',
-  'reference-source-click',
 ])
 // 撤销重做的记录步骤
 const historyRecords = ref({
@@ -185,9 +182,6 @@ provide('handleFullTextCorrection', () => {
 })
 const handleReferenceClick = (event: MouseEvent) => {
   emits('referenceClick', event)
-  emits('reference-click', event)
-  emits('referenceSourceClick', event)
-  emits('reference-source-click', event)
 }
 provide('handleReferenceClick', handleReferenceClick)
 
